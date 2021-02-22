@@ -1,0 +1,53 @@
+{
+    "name": "simialbi/yii2-ews",
+    "type": "yii2-extension",
+    "description": "Exchange web services extension for yii2",
+    "keywords": [
+        "yii2",
+        "exchange",
+        "exchange web services"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "simialbi",
+            "email": "simi.albi@outlook.com"
+        }
+    ],
+    "support": {
+        "source": "https://github.com/simialbi/yii2-ews",
+        "issues": "https://github.com/simialbi/yii2-ews/issues"
+    },
+    "minimum-stability": "beta",
+    "require": {
+        "php": ">=7.1",
+        "yiisoft/yii2": "^2.0.20",
+        "php-ews/php-ews": "^1.0.0",
+        "simialbi/yii2-simialbi-base": ">=0.10.2 <1.0 | ^1.0.0"
+    },
+    "require-dev": {
+        "yiisoft/yii2-coding-standards": "~2.0",
+        "phpunit/phpunit": "<7"
+    },
+    "autoload": {
+        "psr-4": {
+            "simialbi\\yii2\\ews\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "yiiunit\\extensions\\ews\\": "tests"
+        }
+    },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://asset-packagist.org"
+        }
+    ],
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0.x-dev"
+        }
+    }
+}
