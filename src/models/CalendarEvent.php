@@ -10,6 +10,7 @@ use jamesiarmes\PhpEws\Enumeration\CalendarItemTypeType;
 use jamesiarmes\PhpEws\Enumeration\LegacyFreeBusyType;
 use jamesiarmes\PhpEws\Type\CalendarItemType;
 use yii\base\Model;
+use yii\helpers\ArrayHelper;
 
 /**
  * Class CalendarEvent
@@ -17,15 +18,58 @@ use yii\base\Model;
  */
 class CalendarEvent extends Model
 {
+    /**
+     * @var string
+     */
     public $id;
+    /**
+     * @var string
+     */
     public $changeKey;
+    /**
+     * @var string|\DateTime|integer
+     */
     public $start;
+    /**
+     * @var string|\DateTime|integer
+     */
     public $end;
+    /**
+     * @var string
+     */
     public $subject;
+    /**
+     * @var string
+     */
     public $type;
+    /**
+     * @var Contact
+     */
     public $organizer;
-    public $recurring;
+    /**
+     * @var boolean
+     */
+    public $isRecurring;
+    /**
+     * @var boolean
+     */
+    public $isAllDay;
+    /**
+     * @var boolean
+     */
+    public $isCancelled;
+    /**
+     * @var boolean
+     */
+    public $isOnline;
+    /**
+     * @var string
+     */
     public $status;
+    /**
+     * @var string
+     */
+    public $body;
 
     /**
      * {@inheritDoc}
@@ -33,10 +77,10 @@ class CalendarEvent extends Model
     public function rules()
     {
         return [
-            [['id', 'changeKey', 'subject'], 'string'],
+            [['id', 'changeKey', 'subject', 'body'], 'string'],
             ['start', 'datetime', 'format' => 'yyyy-MM-dd HH:mm', 'timestampAttribute' => 'start'],
             ['end', 'datetime', 'format' => 'yyyy-MM-dd HH:mm', 'timestampAttribute' => 'end'],
-            ['recurring', 'boolean'],
+            [['isRecurring', 'isAllDay', 'isCancelled', 'isOnline'], 'boolean'],
             ['type', 'in', 'range' => [
                 CalendarItemTypeType::EXCEPTION,
                 CalendarItemTypeType::OCCURRENCE,
@@ -72,14 +116,18 @@ class CalendarEvent extends Model
             'start' => date('Y-m-d H:i', strtotime($event->Start)),
             'end' => date('Y-m-d H:i', strtotime($event->End)),
             'subject' => $event->Subject,
+            'body' => $event->Body,
             'type' => $event->CalendarItemType,
             'organizer' => new Contact([
-                'id' => $event->Organizer->Mailbox->ItemId->Id,
-                'changeKey' => $event->Organizer->Mailbox->ItemId->ChangeKey,
+                'id' => ArrayHelper::getValue($event->Organizer->Mailbox->ItemId, 'Id'),
+                'changeKey' => ArrayHelper::getValue($event->Organizer->Mailbox->ItemId, 'ChangeKey'),
                 'email' => $event->Organizer->Mailbox->EmailAddress,
                 'name' => $event->Organizer->Mailbox->Name
             ]),
-            'recurring' => $event->IsRecurring,
+            'isRecurring' => $event->IsRecurring,
+            'isAllDay' => $event->IsAllDayEvent,
+            'isCancelled' => $event->IsCancelled,
+            'isOnline' => $event->IsOnlineMeeting,
             'status' => $event->LegacyFreeBusyStatus
         ]);
     }

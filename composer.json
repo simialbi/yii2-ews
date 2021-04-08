@@ -5,7 +5,9 @@
     "keywords": [
         "yii2",
         "exchange",
-        "exchange web services"
+        "exchange web services",
+        "ews",
+        "api"
     ],
     "license": "MIT",
     "authors": [

@@ -15,9 +15,12 @@ use jamesiarmes\PhpEws\Request\FindItemType;
 use jamesiarmes\PhpEws\Response\FindItemResponseMessageType;
 use jamesiarmes\PhpEws\Type\CalendarViewType;
 use jamesiarmes\PhpEws\Type\DistinguishedFolderIdType;
+use jamesiarmes\PhpEws\Type\EmailAddressType;
+use jamesiarmes\PhpEws\Type\ItemResponseShapeType;
 use simialbi\yii2\ews\models\CalendarEvent;
 use Yii;
 use yii\base\Component;
+use yii\validators\EmailValidator;
 
 /**
  * Class Service
@@ -41,6 +44,10 @@ class Service extends Component
      * @var string The user's plain-text password.
      */
     public $password;
+    /**
+     * @var array The mailboxes to check
+     */
+    public $mailboxes = [];
 
     /**
      * @var Client EWS Client instance.
@@ -48,9 +55,28 @@ class Service extends Component
     private $_client;
 
     /**
+     * {@inheritDoc}
+     */
+    public function init()
+    {
+        parent::init();
+
+        array_unshift($this->mailboxes, $this->username);
+        $this->mailboxes = array_unique($this->mailboxes);
+
+        $validator = new EmailValidator(['enableIDN' => function_exists('idn_to_ascii')]);
+        foreach ($this->mailboxes as $k => $mailbox) {
+            if (!$validator->validate($mailbox)) {
+                Yii::warning("Mailbox '$mailbox' is not a valid email address", __METHOD__);
+                unset($this->mailboxes[$k]);
+            }
+        }
+    }
+
+    /**
      * @return Client
      */
-    public function getClient()
+    public function getClient(): Client
     {
         if (empty($this->_client) || !$this->_client instanceof Client) {
             $this->_client = new Client($this->server, $this->username, $this->password);
@@ -60,38 +86,52 @@ class Service extends Component
     }
 
     /**
+     * Get all calendar events from a given date time range
+     *
+     * @param string|\DateTime|integer $start A string parsable by [[strtotime]], [[DateTime]] instance or unix timestamp
+     * @param string|\DateTime|integer $end A string parsable by [[strtotime]], [[DateTime]] instance or unix timestamp
      *
      * @return CalendarEvent[]
      */
-    public function getCalendarEvents()
+    public function getCalendarEvents($start = '-15 days', $end = '+15 days'): array
     {
         $client = $this->getClient();
+        $calendarItems = [];
 
-        $request = new FindItemType();
-        $request->Traversal = ItemQueryTraversalType::SHALLOW;
-//        $request->ItemShape = new ItemResponseShapeType();
-        $request->ItemShape->BaseShape = DefaultShapeNamesType::ALL_PROPERTIES;
-        $request->CalendarView = new CalendarViewType();
-        $request->CalendarView->StartDate = date('c', strtotime('-15 days'));
-        $request->CalendarView->EndDate = date('c', strtotime('+15 days'));
-        $request->ParentFolderIds = new NonEmptyArrayOfBaseFolderIdsType();
-        $request->ParentFolderIds->DistinguishedFolderId = new DistinguishedFolderIdType();
-        $request->ParentFolderIds->DistinguishedFolderId->Id = DistinguishedFolderIdNameType::CALENDAR;
+        $start = Yii::$app->formatter->asTimestamp($start);
+        $end = Yii::$app->formatter->asTimestamp($end);
 
-        $response = $client->FindItem($request);
+        foreach ($this->mailboxes as $mailbox) {
+            $calendarItems[$mailbox] = [];
+            $request = new FindItemType();
+            $request->Traversal = ItemQueryTraversalType::SHALLOW;
+            $request->ItemShape = new ItemResponseShapeType();
+            $request->ItemShape->BaseShape = DefaultShapeNamesType::ALL_PROPERTIES;
+            $request->CalendarView = new CalendarViewType();
+            $request->CalendarView->StartDate = date('c', $start);
+            $request->CalendarView->EndDate = date('c', $end);
+            $request->ParentFolderIds = new NonEmptyArrayOfBaseFolderIdsType();
+            $request->ParentFolderIds->DistinguishedFolderId = new DistinguishedFolderIdType();
+            $request->ParentFolderIds->DistinguishedFolderId->Id = DistinguishedFolderIdNameType::CALENDAR;
+            $request->ParentFolderIds->DistinguishedFolderId->Mailbox = new EmailAddressType();
+            $request->ParentFolderIds->DistinguishedFolderId->Mailbox->EmailAddress = $mailbox;
 
-        /** @var FindItemResponseMessageType $message */
-        $message = $response->ResponseMessages->FindItemResponseMessage;
+            $response = $client->FindItem($request);
 
-        if ($message->RootFolder->TotalItemsInView > 0) {
-            $events = $message->RootFolder->Items->CalendarItem;
-            $calendarItems = [];
-            foreach ($events as $event) {
-                $calendarItems[] = CalendarEvent::fromEvent($event);
+            /** @var FindItemResponseMessageType $message */
+            $message = $response->ResponseMessages->FindItemResponseMessage;
+
+            if (is_array($message)) {
+                $message = array_shift($message);
             }
-            return $calendarItems;
-        } else {
-            return [];
+
+            if ($message->RootFolder->TotalItemsInView > 0) {
+                foreach ($message->RootFolder->Items->CalendarItem as $event) {
+                    $calendarItems[$mailbox][] = CalendarEvent::fromEvent($event);
+                }
+            }
         }
+
+        return $calendarItems;
     }
 }
