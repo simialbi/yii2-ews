@@ -1,0 +1,195 @@
+<?php
+/**
+ * @package yii2-ews
+ * @author Simon Karlen <simi.albi@gmail.com>
+ */
+
+namespace simialbi\yii2\ews;
+
+use jamesiarmes\PhpEws\Enumeration\ResponseCodeType;
+use jamesiarmes\PhpEws\Request\BaseRequestType;
+use Yii;
+use yii\base\Component;
+use yii\helpers\ArrayHelper;
+
+/**
+ * Class Command class implements the soap xml generation for .
+ *
+ *
+ */
+class Command extends Component
+{
+    /**
+     * @var Connection
+     */
+    public $db;
+
+    /**
+     * @var array the parameters (name => value) that are injected to the request.
+     */
+    public $params = [];
+
+    /**
+     * @var \yii\caching\Dependency the dependency to be associated with the cached query result for this command
+     * @see cache()
+     */
+    public $queryCacheDependency;
+    /**
+     * @var int the default number of seconds that query results can remain valid in cache.
+     * Use 0 to indicate that the cached data will never expire. And use a negative number to indicate
+     * query cache should not be used.
+     * @see cache()
+     */
+    public $queryCacheDuration;
+
+    /**
+     * @var BaseRequestType
+     */
+    private $_request;
+
+    /**
+     * Returns the raw SQL by inserting parameter values into the corresponding placeholders in [[sql]].
+     * Note that the return value of this method should mainly be used for logging purpose.
+     * It is likely that this method returns an invalid SQL due to improper replacement of parameter placeholders.
+     * @return BaseRequestType the raw SQL with parameter values inserted into the corresponding placeholders in [[sql]].
+     */
+    public function getRequest(): BaseRequestType
+    {
+        return $this->_request;
+    }
+
+    /**
+     * Specifies the request to be executed.
+     * The previous request (if any) will be discarded, and params will be cleared as well.
+     * @param BaseRequestType $request
+     * @return $this
+     */
+    public function setRequest(BaseRequestType $request): Command
+    {
+        if ($request !== $this->_request) {
+            $this->params = [];
+            $this->_request = $request;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Enables query cache for this command.
+     * @param int $duration the number of seconds that query result of this command can remain valid in the cache.
+     * If this is not set, the value of [[Connection::queryCacheDuration]] will be used instead.
+     * Use 0 to indicate that the cached data will never expire.
+     * @param \yii\caching\Dependency $dependency the cache dependency associated with the cached query result.
+     * @return $this the command object itself
+     */
+    public function cache($duration = null, $dependency = null): Command
+    {
+        $this->queryCacheDuration = $duration === null ? $this->db->queryCacheDuration : $duration;
+        $this->queryCacheDependency = $dependency;
+        return $this;
+    }
+
+    /**
+     * Disables query cache for this command.
+     * @return $this the command object itself
+     */
+    public function noCache(): Command
+    {
+        $this->queryCacheDuration = -1;
+        return $this;
+    }
+
+    /**
+     * Creates a new record
+     *
+     * @param string $model
+     * @param array $columns
+     *
+     * @return array|bool
+     */
+    public function insert($model, $columns)
+    {
+        return [];
+    }
+
+    /**
+     * Executes the statement and returns ALL rows at once.
+     * @param int $fetchMode for compatibility with [[\yii\db\Command]]
+     * @return array all rows of the query result. Each array element is an array representing a row of data.
+     * An empty array is returned if the query results in nothing.
+     * @throws \yii\base\InvalidConfigException
+     */
+    public function queryAll($fetchMode = null)
+    {
+        return $this->queryInternal();
+    }
+
+    /**
+     * Performs the actual statement
+     *
+     * @param string $method method of the [[\jamesiarmes\PhpEws\Client]] to be called
+     *
+     * @return mixed
+     * @throws Exception
+     */
+    protected function queryInternal($method = 'FindItem')
+    {
+        $request = $this->getRequest();
+        $key = $method . ': ' . serialize($request);
+        if ($method !== '') {
+            $info = $this->db->getQueryCacheInfo($this->queryCacheDuration, $this->queryCacheDependency);
+            if (is_array($info)) {
+                /* @var $cache \yii\caching\CacheInterface */
+                $cache = $info[0];
+                $result = $cache->get($key);
+                if (is_array($result) && isset($result[0])) {
+                    Yii::debug('Query result served from cache', __METHOD__);
+                    return $result[0];
+                }
+            }
+        }
+
+        try {
+            if ($this->db->enableProfiling) {
+                Yii::beginProfile($key, __METHOD__);
+            }
+            if ($this->db->enableLogging) {
+                Yii::info($key, __METHOD__);
+            }
+
+            /** @var \jamesiarmes\PhpEws\Response\ResponseMessageType $response */
+            $response = call_user_func([$this->db->getClient(), $method], $request);
+
+            if ($response->ResponseCode !== ResponseCodeType::NO_ERROR) {
+                throw new Exception($response->MessageText, [
+                    'responseCode' => $response->ResponseCode,
+                    'responseClass' => $response->ResponseClass
+                ]);
+            }
+
+            $message = ArrayHelper::getValue($response, "ResponseMessages.{$method}ResponseMessage");
+            if (is_array($message)) {
+                $message = array_shift($message);
+            }
+
+            $result = $message;
+
+            // TODO: get correct Items
+        } catch (Exception $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            throw new Exception($e->getMessage());
+        } finally {
+            if ($this->db->enableProfiling) {
+                Yii::endProfile($key, __METHOD__);
+            }
+        }
+
+        if (isset($cache, $key, $info)) {
+            $cache->set($key, [$result], $info[1], $info[2]);
+            Yii::debug('Saved query result in cache', 'yii\db\Command::query');
+        }
+
+        return $result;
+    }
+}

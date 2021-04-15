@@ -6,7 +6,9 @@
 
 namespace simialbi\yii2\ews\models;
 
+use jamesiarmes\PhpEws\Type\SingleRecipientType;
 use yii\base\Model;
+use yii\helpers\ArrayHelper;
 
 /**
  * Class Contact
@@ -30,6 +32,24 @@ class Contact extends Model
      * @var string
      */
     public $name;
+
+    /**
+     * Convert SingleRecipientType to Contact
+     *
+     * @param SingleRecipientType $recipient
+     *
+     * @return static
+     * @throws \Exception
+     */
+    public static function fromSingleRecipient(SingleRecipientType $recipient): Contact
+    {
+        return new static([
+            'id' => ArrayHelper::getValue($recipient->Mailbox->ItemId, 'Id'),
+            'changeKey' => ArrayHelper::getValue($recipient->Mailbox->ItemId, 'ChangeKey'),
+            'email' => $recipient->Mailbox->EmailAddress,
+            'name' => $recipient->Mailbox->Name
+        ]);
+    }
 
     /**
      * {@inheritDoc}

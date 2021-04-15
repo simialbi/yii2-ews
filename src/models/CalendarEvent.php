@@ -8,69 +8,31 @@ namespace simialbi\yii2\ews\models;
 
 use jamesiarmes\PhpEws\Enumeration\CalendarItemTypeType;
 use jamesiarmes\PhpEws\Enumeration\LegacyFreeBusyType;
-use jamesiarmes\PhpEws\Type\CalendarItemType;
-use yii\base\Model;
-use yii\helpers\ArrayHelper;
+use simialbi\yii2\ews\ActiveRecord;
 
 /**
  * Class CalendarEvent
  * @package simialbi\yii2\ews\models
+ *
+ * @property string $id => \jamesiarmes\PhpEws\Type\ItemIdType:ItemId.Id
+ * @property string $changeKey => \jamesiarmes\PhpEws\Type\ItemIdType:ItemId.ChangeKey
+ * @property string|\DateTime|integer $start => Start
+ * @property string|\DateTime|integer $end => End
+ * @property string $subject => Subject
+ * @property string $body => \jamesiarmes\PhpEws\Type\BodyType:Body._
+ * @property string $type => CalendarItemType
+ * @property boolean $isRecurring => IsRecurring
+ * @property boolean $isAllDay => IsAllDay
+ * @property boolean $isCancelled => IsCancelled
+ * @property boolean $isOnline => IsOnline
+ * @property string $status => LegacyFreeBusyStatus
+ *
+ * @property Contact $organizer => \jamesiarmes\PhpEws\Type\SingleRecipientType:Organizer
+ * @property Contact[] $requiredAttendees => \jamesiarmes\PhpEws\Type\SingleRecipientType:RequiredAttendees
+ * @property Contact[] $optionalAttendees => \jamesiarmes\PhpEws\Type\SingleRecipientType:OptionalAttendees
  */
-class CalendarEvent extends Model
+class CalendarEvent extends ActiveRecord
 {
-    /**
-     * @var string
-     */
-    public $id;
-    /**
-     * @var string
-     */
-    public $changeKey;
-    /**
-     * @var string|\DateTime|integer
-     */
-    public $start;
-    /**
-     * @var string|\DateTime|integer
-     */
-    public $end;
-    /**
-     * @var string
-     */
-    public $subject;
-    /**
-     * @var string
-     */
-    public $type;
-    /**
-     * @var Contact
-     */
-    public $organizer;
-    /**
-     * @var boolean
-     */
-    public $isRecurring;
-    /**
-     * @var boolean
-     */
-    public $isAllDay;
-    /**
-     * @var boolean
-     */
-    public $isCancelled;
-    /**
-     * @var boolean
-     */
-    public $isOnline;
-    /**
-     * @var string
-     */
-    public $status;
-    /**
-     * @var string
-     */
-    public $body;
-
     /**
      * {@inheritDoc}
      */
@@ -87,7 +49,7 @@ class CalendarEvent extends Model
                 CalendarItemTypeType::RECURRING_MASTER,
                 CalendarItemTypeType::SINGLE
             ]],
-            ['organizer', 'safe'],
+            [['organizer', 'requiredAttendees', 'optionalAttendees'], 'safe'],
             [
                 'status',
                 'in',
@@ -101,34 +63,5 @@ class CalendarEvent extends Model
                 ]
             ]
         ];
-    }
-
-    /**
-     *
-     * @param CalendarItemType $event
-     * @return static
-     */
-    public static function fromEvent($event)
-    {
-        return new static([
-            'id' => $event->ItemId->Id,
-            'changeKey' => $event->ItemId->ChangeKey,
-            'start' => date('Y-m-d H:i', strtotime($event->Start)),
-            'end' => date('Y-m-d H:i', strtotime($event->End)),
-            'subject' => $event->Subject,
-            'body' => $event->Body,
-            'type' => $event->CalendarItemType,
-            'organizer' => new Contact([
-                'id' => ArrayHelper::getValue($event->Organizer->Mailbox->ItemId, 'Id'),
-                'changeKey' => ArrayHelper::getValue($event->Organizer->Mailbox->ItemId, 'ChangeKey'),
-                'email' => $event->Organizer->Mailbox->EmailAddress,
-                'name' => $event->Organizer->Mailbox->Name
-            ]),
-            'isRecurring' => $event->IsRecurring,
-            'isAllDay' => $event->IsAllDayEvent,
-            'isCancelled' => $event->IsCancelled,
-            'isOnline' => $event->IsOnlineMeeting,
-            'status' => $event->LegacyFreeBusyStatus
-        ]);
     }
 }
