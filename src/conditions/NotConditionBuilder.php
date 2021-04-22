@@ -7,6 +7,7 @@
 namespace simialbi\yii2\ews\conditions;
 
 use jamesiarmes\PhpEws\Type\NotType;
+use Yii;
 use yii\db\ExpressionInterface;
 use yii\helpers\StringHelper;
 
@@ -19,6 +20,7 @@ class NotConditionBuilder extends \yii\db\conditions\NotConditionBuilder
 
     /**
      * {@inheritDoc}
+     * @return object|array
      */
     public function build(ExpressionInterface $expression, array &$params = [])
     {
@@ -35,8 +37,8 @@ class NotConditionBuilder extends \yii\db\conditions\NotConditionBuilder
             return [];
         }
         // Strip "Type"
-        $config[substr(StringHelper::basename($built['class']), -4)] = $built;
+        $config[substr(StringHelper::basename(get_class($built)), 0, -4)] = $built;
 
-        return $config;
+        return Yii::createObject($config);
     }
 }

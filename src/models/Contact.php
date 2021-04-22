@@ -6,15 +6,21 @@
 
 namespace simialbi\yii2\ews\models;
 
+use jamesiarmes\PhpEws\Type\ContactItemType;
 use jamesiarmes\PhpEws\Type\SingleRecipientType;
-use yii\base\Model;
+use simialbi\yii2\ews\ActiveRecord;
 use yii\helpers\ArrayHelper;
 
 /**
  * Class Contact
  * @package simialbi\yii2\ews\models
+ *
+ * @property string $id => \jamesiarmes\PhpEws\Type\ItemIdType:ItemId.Id
+ * @property string $changeKey => \jamesiarmes\PhpEws\Type\ItemIdType:ItemId.ChangeKey
+ * @property string $email => Mailbox.Email
+ * @property string $name => Mailbox.Name
  */
-class Contact extends Model
+class Contact extends ActiveRecord
 {
     /**
      * @var string
@@ -32,6 +38,14 @@ class Contact extends Model
      * @var string
      */
     public $name;
+
+    /**
+     * {@inheritDoc}
+     */
+    public static function modelName(): string
+    {
+        return ContactItemType::class;
+    }
 
     /**
      * Convert SingleRecipientType to Contact

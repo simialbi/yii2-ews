@@ -8,6 +8,7 @@ namespace simialbi\yii2\ews\models;
 
 use jamesiarmes\PhpEws\Enumeration\CalendarItemTypeType;
 use jamesiarmes\PhpEws\Enumeration\LegacyFreeBusyType;
+use jamesiarmes\PhpEws\Type\CalendarItemType;
 use simialbi\yii2\ews\ActiveRecord;
 
 /**
@@ -22,17 +23,25 @@ use simialbi\yii2\ews\ActiveRecord;
  * @property string $body => \jamesiarmes\PhpEws\Type\BodyType:Body._
  * @property string $type => CalendarItemType
  * @property boolean $isRecurring => IsRecurring
- * @property boolean $isAllDay => IsAllDay
+ * @property boolean $isAllDay => IsAllDayEvent
  * @property boolean $isCancelled => IsCancelled
- * @property boolean $isOnline => IsOnline
+ * @property boolean $isOnline => IsOnlineMeeting
  * @property string $status => LegacyFreeBusyStatus
  *
  * @property Contact $organizer => \jamesiarmes\PhpEws\Type\SingleRecipientType:Organizer
- * @property Contact[] $requiredAttendees => \jamesiarmes\PhpEws\Type\SingleRecipientType:RequiredAttendees
- * @property Contact[] $optionalAttendees => \jamesiarmes\PhpEws\Type\SingleRecipientType:OptionalAttendees
+ * @property Attendee[] $requiredAttendees => \jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfAttendeesType:RequiredAttendees.Attendee
+ * @property Attendee[] $optionalAttendees => \jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfAttendeesType:OptionalAttendees.Attendee
  */
 class CalendarEvent extends ActiveRecord
 {
+    /**
+     * {@inheritDoc}
+     */
+    public static function modelName(): string
+    {
+        return CalendarItemType::class;
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -61,7 +70,11 @@ class CalendarEvent extends ActiveRecord
                     LegacyFreeBusyType::TENTATIVE,
                     LegacyFreeBusyType::WORKING_ELSEWHERE
                 ]
-            ]
+            ],
+
+            ['status', 'default', 'value' => LegacyFreeBusyType::BUSY],
+            ['type', 'default', 'value' => CalendarItemTypeType::SINGLE],
+            [['isRecurring', 'isAllDay', 'isCancelled', 'isOnline'], 'default', 'value' => false]
         ];
     }
 }

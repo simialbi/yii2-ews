@@ -12,6 +12,7 @@ use jamesiarmes\PhpEws\Enumeration\ContainmentModeType;
 use jamesiarmes\PhpEws\Type\ConstantValueType;
 use jamesiarmes\PhpEws\Type\ContainsExpressionType;
 use jamesiarmes\PhpEws\Type\PathToUnindexedFieldType;
+use Yii;
 use yii\db\ExpressionInterface;
 
 class LikeConditionBuilder extends \yii\db\conditions\LikeConditionBuilder
@@ -23,23 +24,23 @@ class LikeConditionBuilder extends \yii\db\conditions\LikeConditionBuilder
 
     /**
      * {@inheritDoc}
-     * @return array
+     * @return object
      */
     public function build(ExpressionInterface $expression, array &$params = [])
     {
         /** @var \yii\db\conditions\LikeCondition $expression */
-        return [
+        return Yii::createObject([
             'class' => ContainsExpressionType::class,
             'ContainmentComparison' => ContainmentComparisonType::IGNORE_CASE_AND_NON_SPACING_CHARS,
             'ContainmentMode' => ContainmentModeType::SUBSTRING,
-            'FieldURI' => [
+            'FieldURI' => Yii::createObject([
                 'class' => PathToUnindexedFieldType::class,
                 'FieldURI' => $this->queryBuilder->getUriFromProperty($expression->getColumn())
-            ],
-            'Constant' => [
+            ]),
+            'Constant' => Yii::createObject([
                 'class' => ConstantValueType::class,
                 'Value' => $expression->getValue()
-            ]
-        ];
+            ])
+        ]);
     }
 }

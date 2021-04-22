@@ -15,6 +15,7 @@ use jamesiarmes\PhpEws\Type\IsGreaterThanType;
 use jamesiarmes\PhpEws\Type\IsLessThanOrEqualToType;
 use jamesiarmes\PhpEws\Type\IsLessThanType;
 use jamesiarmes\PhpEws\Type\PathToUnindexedFieldType;
+use Yii;
 use yii\db\ExpressionInterface;
 
 class SimpleConditionBuilder extends \yii\db\conditions\SimpleConditionBuilder
@@ -26,7 +27,7 @@ class SimpleConditionBuilder extends \yii\db\conditions\SimpleConditionBuilder
 
     /**
      * {@inheritDoc}
-     * @return array;
+     * @return object|array
      */
     public function build(ExpressionInterface $expression, array &$params = [])
     {
@@ -51,19 +52,19 @@ class SimpleConditionBuilder extends \yii\db\conditions\SimpleConditionBuilder
                 return [];
         }
 
-        return [
+        return Yii::createObject([
             'class' => $class,
-            'FieldURI' => [
+            'FieldURI' => Yii::createObject([
                 'class' => PathToUnindexedFieldType::class,
                 'FieldURI' => $this->queryBuilder->getUriFromProperty($expression->getColumn())
-            ],
-            'FieldURIOrConstant' => [
+            ]),
+            'FieldURIOrConstant' => Yii::createObject([
                 'class' => FieldURIOrConstantType::class,
-                'Constant' => [
+                'Constant' => Yii::createObject([
                     'class' => ConstantValueType::class,
                     'Value' => $expression->getValue()
-                ]
-            ]
-        ];
+                ])
+            ])
+        ]);
     }
 }

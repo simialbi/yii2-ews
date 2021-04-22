@@ -10,6 +10,7 @@ use jamesiarmes\PhpEws\Type\ConstantValueType;
 use jamesiarmes\PhpEws\Type\FieldURIOrConstantType;
 use jamesiarmes\PhpEws\Type\IsEqualToType;
 use jamesiarmes\PhpEws\Type\PathToUnindexedFieldType;
+use Yii;
 use yii\db\ExpressionInterface;
 
 /**
@@ -33,20 +34,20 @@ class HashConditionBuilder extends \yii\db\conditions\HashConditionBuilder
 
         $elements = [];
         foreach ($hash as $column => $value) {
-            $elements[] = [
+            $elements[] = Yii::createObject([
                 'class' => IsEqualToType::class,
-                'FieldURI' => [
+                'FieldURI' => Yii::createObject([
                     'class' => PathToUnindexedFieldType::class,
                     'FieldURI' => $this->queryBuilder->getUriFromProperty($column)
-                ],
-                'FieldURIOrConstant' => [
+                ]),
+                'FieldURIOrConstant' => Yii::createObject([
                     'class' => FieldURIOrConstantType::class,
-                    'Constant' => [
+                    'Constant' => Yii::createObject([
                         'class' => ConstantValueType::class,
                         'Value' => $value
-                    ]
-                ]
-            ];
+                    ])
+                ])
+            ]);
         }
 
         return count($elements) === 1 ? $elements[0] : $this->queryBuilder->buildCondition(['AND', $elements], $params);

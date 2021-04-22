@@ -227,10 +227,7 @@ class Connection extends Component
             $result = call_user_func($callable, $this);
             array_pop($this->_queryCacheInfo);
             return $result;
-        } catch (\Exception $e) {
-            array_pop($this->_queryCacheInfo);
-            throw $e;
-        } catch (\Throwable $e) {
+        } catch (\Exception | \Throwable $e) {
             array_pop($this->_queryCacheInfo);
             throw $e;
         }

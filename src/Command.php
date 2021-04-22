@@ -102,14 +102,17 @@ class Command extends Component
     /**
      * Creates a new record
      *
-     * @param string $model
-     * @param array $columns
+     * @param string $model the model instance to create insert statement for
+     * @param array $columns the column data (name => value) to be inserted
      *
-     * @return array|bool
+     * @return $this the command object itself
      */
     public function insert($model, $columns)
     {
-        return [];
+        $params = [];
+        $request = $this->db->getQueryBuilder()->insert($model, $columns, $params);
+
+        return $this->setRequest($request);
     }
 
     /**
@@ -167,14 +170,25 @@ class Command extends Component
                 ]);
             }
 
+            /** @var \jamesiarmes\PhpEws\Response\FindItemResponseMessageType $message */
             $message = ArrayHelper::getValue($response, "ResponseMessages.{$method}ResponseMessage");
             if (is_array($message)) {
                 $message = array_shift($message);
             }
 
-            $result = $message;
+            switch ($method) {
+                case 'FindItem':
+                    $result = ArrayHelper::getValue($message, 'RootFolder.Items');
+                    break;
+                case 'FindFolder':
+                    $result = ArrayHelper::getValue($message, 'RootFolder.Folders');
+                    break;
+                default:
+                    $result = [[]];
+                    break;
+            }
 
-            // TODO: get correct Items
+            $result = array_shift($result);
         } catch (Exception $e) {
             throw $e;
         } catch (\Exception $e) {
@@ -187,7 +201,7 @@ class Command extends Component
 
         if (isset($cache, $key, $info)) {
             $cache->set($key, [$result], $info[1], $info[2]);
-            Yii::debug('Saved query result in cache', 'yii\db\Command::query');
+            Yii::debug('Saved query result in cache', __METHOD__);
         }
 
         return $result;

@@ -9,6 +9,7 @@ namespace simialbi\yii2\ews\conditions;
 
 use jamesiarmes\PhpEws\Type\AndType;
 use jamesiarmes\PhpEws\Type\OrType;
+use Yii;
 use yii\db\ExpressionInterface;
 use yii\helpers\StringHelper;
 
@@ -21,7 +22,7 @@ class ConjunctionConditionBuilder extends \yii\db\conditions\ConjunctionConditio
 
     /**
      * {@inheritDoc}
-     * @return array
+     * @return object|object[]
      */
     public function build(ExpressionInterface $condition, array &$params = [])
     {
@@ -30,17 +31,18 @@ class ConjunctionConditionBuilder extends \yii\db\conditions\ConjunctionConditio
         $config = [];
         $class = ($condition->getOperator() === 'OR') ? OrType::class : AndType::class;
         foreach ($expressions as $expression) {
-            $built = $this->queryBuilder->buildExpression($expression, $params);
-            if (!isset($built['class'])) {
+            $built = $this->queryBuilder->buildCondition($expression, $params);
+
+            if (!is_object($built)) {
                 continue;
             }
             // Strip "Type"
-            $config[substr(StringHelper::basename($built['class']), -4)][] = $built;
+            $config[substr(StringHelper::basename(get_class($built)), 0, -4)][] = $built;
         }
 
         foreach ($config as $key => $value) {
             if (count($value) === 1) {
-                $config[$key] = $value;
+                $config[$key] = $value[0];
                 continue;
             }
             $config[$class] = $this->queryBuilder->buildCondition([$condition->getOperator(), $value], $params);
@@ -48,6 +50,6 @@ class ConjunctionConditionBuilder extends \yii\db\conditions\ConjunctionConditio
 
         $config['class'] = $class;
 
-        return $config;
+        return Yii::createObject($config);
     }
 }

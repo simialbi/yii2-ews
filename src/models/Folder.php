@@ -6,7 +6,7 @@
 
 namespace simialbi\yii2\ews\models;
 
-
+use jamesiarmes\PhpEws\Type\FolderType;
 use simialbi\yii2\ews\ActiveRecord;
 
 /**
@@ -27,7 +27,7 @@ class Folder extends ActiveRecord
      */
     public static function modelName(): string
     {
-        return '';
+        return FolderType::class;
     }
 
     /**

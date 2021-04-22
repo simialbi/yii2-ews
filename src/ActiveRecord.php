@@ -87,9 +87,9 @@ class ActiveRecord extends BaseActiveRecord
      */
     final private static function parseAttributes(): array
     {
-        $regex = '#^@property(?:-(read|write))?(?:\s+([^\s]+))?\s+\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)(?:\s+=>\s+(\\[\\a-zA-Z0-9\x7f-\xff]+)?:?([a-zA-Z0-9\x7f-\xff\.]+))?#';
-        $typeRegex = '#^(bool(ean)?|int(eger)?|float|double|string|array)$#';
-        $reflection = new \ReflectionClass(__CLASS__);
+        $regex = '#^@property(?:-(read|write))?(?:\s+([^\s]+))?\s+\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)(?:\s+=>\s+(\\\\[\\\\a-zA-Z0-9\x7f-\xff]+)?:?([a-zA-Z0-9\x7f-\xff._]+))?#';
+//        $typeRegex = '#^(bool(ean)?|int(eger)?|float|double|string|array)$#';
+        $reflection = new \ReflectionClass(get_called_class());
         $docLines = preg_split('~\R~u', $reflection->getDocComment());
         $attributeFields = [];
         $attributeMeta = [];
@@ -97,7 +97,7 @@ class ActiveRecord extends BaseActiveRecord
             $matches = [];
             $docLine = ltrim($docLine, "\t* ");
             if (preg_match($regex, $docLine, $matches) && isset($matches[3])) {
-                if ($matches[1] === 'read' || (!empty($matches[2]) && !preg_match($typeRegex, $matches[2]))) {
+                if ($matches[1] === 'read' || empty($matches[2])) {
                     continue;
                 }
                 $attributeFields[] = $matches[3];
@@ -175,7 +175,7 @@ class ActiveRecord extends BaseActiveRecord
             return false;
         }
         $values = $this->getDirtyAttributes($attributes);
-        if (false === ($data = static::getDb()->createCommand()->insert(static::modelName(), $values))) {
+        if (false === ($data = static::getDb()->createCommand()->insert(static::class, $values))) {
             return false;
         }
         foreach ($data as $name => $value) {
