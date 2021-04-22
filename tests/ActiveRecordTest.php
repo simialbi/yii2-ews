@@ -29,6 +29,16 @@ class ActiveRecordTest extends TestCase
                 'foreignModel' => '\jamesiarmes\PhpEws\Type\ItemIdType',
                 'foreignField' => 'ItemId.ChangeKey'
             ],
+            'parentFolderId' => [
+                'dataType' => ['string'],
+                'foreignModel' => '\jamesiarmes\PhpEws\Type\FolderIdType',
+                'foreignField' => 'ParentFolderId.Id'
+            ],
+            'parentFolderChangeKey' => [
+                'dataType' => ['string'],
+                'foreignModel' => '\jamesiarmes\PhpEws\Type\FolderIdType',
+                'foreignField' => 'ParentFolderId.ChangeKey'
+            ],
             'subject' => [
                 'dataType' => ['string'],
                 'foreignModel' => null,

@@ -11,6 +11,7 @@ use jamesiarmes\PhpEws\Request\BaseRequestType;
 use Yii;
 use yii\base\Component;
 use yii\helpers\ArrayHelper;
+use yii\helpers\StringHelper;
 
 /**
  * Class Command class implements the soap xml generation for .
@@ -130,14 +131,17 @@ class Command extends Component
     /**
      * Performs the actual statement
      *
-     * @param string $method method of the [[\jamesiarmes\PhpEws\Client]] to be called
+     * @param string|null $method method of the [[\jamesiarmes\PhpEws\Client]] to be called
      *
      * @return mixed
      * @throws Exception
      */
-    protected function queryInternal($method = 'FindItem')
+    protected function queryInternal($method = null)
     {
         $request = $this->getRequest();
+        if (null === $method) {
+            $method = substr(StringHelper::basename(get_class($request)), 0, -4);
+        }
         $key = $method . ': ' . serialize($request);
         if ($method !== '') {
             $info = $this->db->getQueryCacheInfo($this->queryCacheDuration, $this->queryCacheDependency);
@@ -205,5 +209,57 @@ class Command extends Component
         }
 
         return $result;
+    }
+
+    /**
+     * Executes the request
+     * This method should only be used for executing non-query operations, such as `INSERT`, `DELETE`, `UPDATE` etc.
+     * No result set will be returned.
+     * @return boolean true if the request was successful, otherwise false
+     * @throws Exception execution failed
+     */
+    public function execute(): bool
+    {
+        $request = $this->getRequest();
+        if (!$request || !is_object($request)) {
+            return false;
+        }
+        $method = substr(StringHelper::basename(get_class($request)), 0, -4);
+        $key = $method . ': ' . serialize($request);
+
+        try {
+            if ($this->db->enableProfiling) {
+                Yii::beginProfile($key, __METHOD__);
+            }
+            if ($this->db->enableLogging) {
+                Yii::info($key, __METHOD__);
+            }
+
+            /** @var \jamesiarmes\PhpEws\Response\BaseResponseMessageType $response */
+            $response = call_user_func([$this->db->getClient(), $method], $request);
+
+            /** @var \jamesiarmes\PhpEws\Response\ItemInfoResponseMessageType $message */
+            $message = ArrayHelper::getValue($response, "ResponseMessages.{$method}ResponseMessage");
+            if (is_array($message)) {
+                $message = array_shift($message);
+            }
+
+            if ($message->ResponseCode !== ResponseCodeType::NO_ERROR) {
+                throw new Exception($message->MessageText, [
+                    'responseCode' => $message->ResponseCode,
+                    'responseClass' => $message->ResponseClass
+                ]);
+            }
+        } catch (Exception $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            throw new Exception($e->getMessage());
+        } finally {
+            if ($this->db->enableProfiling) {
+                Yii::endProfile($key, __METHOD__);
+            }
+        }
+
+        return true;
     }
 }

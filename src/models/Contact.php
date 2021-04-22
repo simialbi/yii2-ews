@@ -17,6 +17,8 @@ use yii\helpers\ArrayHelper;
  *
  * @property string $id => \jamesiarmes\PhpEws\Type\ItemIdType:ItemId.Id
  * @property string $changeKey => \jamesiarmes\PhpEws\Type\ItemIdType:ItemId.ChangeKey
+ * @property string $parentFolderId => \jamesiarmes\PhpEws\Type\FolderIdType:ParentFolderId.Id
+ * @property string $parentFolderChangeKey => \jamesiarmes\PhpEws\Type\FolderIdType:ParentFolderId.ChangeKey
  * @property string $email => Mailbox.Email
  * @property string $name => Mailbox.Name
  */
