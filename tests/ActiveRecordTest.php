@@ -44,6 +44,11 @@ class ActiveRecordTest extends TestCase
                 'foreignModel' => null,
                 'foreignField' => 'Subject'
             ],
+            'format' => [
+                'dataType' => ['string'],
+                'foreignModel' => '\jamesiarmes\PhpEws\Type\BodyType',
+                'foreignField' => 'Body.BodyType'
+            ],
             'body' => [
                 'dataType' => ['string'],
                 'foreignModel' => '\jamesiarmes\PhpEws\Type\BodyType',
@@ -89,6 +94,7 @@ class ActiveRecordTest extends TestCase
 
         $startDate = date('c', strtotime('-2 weeks'));
         $endDate = date('c', strtotime('+2 weeks'));
+        $query->from(['mailbox' => 'john.doe@example.com']);
         $query->where(['>=', 'start', $startDate]);
         $query->andWhere(['<=', 'end', $endDate]);
         $query->orderBy(['start' => SORT_ASC]);
@@ -105,6 +111,8 @@ class ActiveRecordTest extends TestCase
         $this->assertInstanceOf('jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfBaseFolderIdsType', $request->ParentFolderIds);
         $this->assertInstanceOf('jamesiarmes\PhpEws\Type\DistinguishedFolderIdType', $request->ParentFolderIds->DistinguishedFolderId);
         $this->assertEquals(DistinguishedFolderIdNameType::CALENDAR, $request->ParentFolderIds->DistinguishedFolderId->Id);
+        $this->assertInstanceOf('jamesiarmes\PhpEws\Type\EmailAddressType', $request->ParentFolderIds->DistinguishedFolderId->Mailbox);
+        $this->assertEquals('john.doe@example.com', $request->ParentFolderIds->DistinguishedFolderId->Mailbox->EmailAddress);
         $this->assertInstanceOf('jamesiarmes\PhpEws\Type\RestrictionType', $request->Restriction);
         $this->assertInstanceOf('jamesiarmes\PhpEws\Type\AndType', $request->Restriction->And);
         $this->assertInstanceOf('jamesiarmes\PhpEws\Type\IsGreaterThanOrEqualToType', $request->Restriction->And->IsGreaterThanOrEqualTo);
@@ -160,6 +168,7 @@ class ActiveRecordTest extends TestCase
         $this->assertEquals(false, $calendarItem->IsRecurring);
         $this->assertEquals('Busy', $calendarItem->LegacyFreeBusyStatus);
         $this->assertInstanceOf('jamesiarmes\PhpEws\Type\BodyType', $calendarItem->Body);
+        $this->assertEquals('HTML', $calendarItem->Body->BodyType);
         $this->assertEquals('<p>This is a test</p>', $calendarItem->Body->_);
         $this->assertEquals('Test', $calendarItem->Subject);
         $this->assertInstanceOf('jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfAttendeesType', $calendarItem->RequiredAttendees);

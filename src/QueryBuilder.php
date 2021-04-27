@@ -24,6 +24,7 @@ use jamesiarmes\PhpEws\Request\FindItemType;
 use jamesiarmes\PhpEws\Type\AggregateOnType;
 use jamesiarmes\PhpEws\Type\CalendarItemType;
 use jamesiarmes\PhpEws\Type\DistinguishedFolderIdType;
+use jamesiarmes\PhpEws\Type\EmailAddressType;
 use jamesiarmes\PhpEws\Type\FieldOrderType;
 use jamesiarmes\PhpEws\Type\FolderIdType;
 use jamesiarmes\PhpEws\Type\FolderResponseShapeType;
@@ -173,11 +174,22 @@ class QueryBuilder extends \yii\db\QueryBuilder
         $config = [
             'class' => NonEmptyArrayOfBaseFolderIdsType::class
         ];
+        $mailbox = false;
+        if (isset($tables['mailbox'])) {
+            $mailbox = Yii::createObject([
+                'class' => EmailAddressType::class,
+                'EmailAddress' => $tables['mailbox']
+            ]);
+            unset($tables['mailbox']);
+        }
         if (empty($tables)) {
             $config['DistinguishedFolderId'] = Yii::createObject([
                 'class' => DistinguishedFolderIdType::class,
                 'Id' => $params['folderId']
             ]);
+            if ($mailbox) {
+                $config['DistinguishedFolderId']->Mailbox = $mailbox;
+            }
         } else {
             foreach ($tables as $from) {
                 $config['FolderId'][] = Yii::createObject([
@@ -261,113 +273,6 @@ class QueryBuilder extends \yii\db\QueryBuilder
         }
 
         return Yii::createObject($config);
-    }
-
-    /**
-     * {@inheritDoc}
-     * @throws NotSupportedException
-     */
-    protected function prepareInsertValues($table, $columns, $params = [])
-    {
-        /** @var ActiveRecord $table */
-        $mapping = $table::attributeMapping();
-
-        $items = [];
-        if ($columns instanceof Query) {
-            throw new NotSupportedException('Nesting is not supported by EWS');
-        } else {
-            $val = [
-                'class' => $table::modelName()
-            ];
-            foreach ($columns as $name => $value) {
-                if (!isset($mapping[$name]) || !isset($mapping[$name]['foreignField'])) {
-                    continue;
-                }
-
-                if (count($mapping[$name]['dataType']) > 1) {
-                    if (false !== in_array('\\DateTime', $mapping[$name]['dataType'])) {
-                        $dataType = 'DateTime';
-                    } else {
-                        $dataType = 'string';
-                    }
-                } else {
-                    $dataType = $mapping[$name]['dataType'][0];
-                }
-
-                if (substr($dataType, -2) === '[]') {
-                    $dataType = substr($dataType, 0, -2);
-                    if (!is_array($value)) {
-                        $value = [$value];
-                    }
-                }
-
-                // Typecast
-                switch ($dataType) {
-                    case 'int':
-                    case 'integer':
-                        $value = (int)$value;
-                        break;
-                    case 'boolean':
-                    case 'bool':
-                        $value = (bool)$value;
-                        break;
-                    case 'double':
-                    case 'float':
-                        $value = (float)$value;
-                        break;
-                    case 'string':
-                        if (is_float($value)) {
-                            $value = StringHelper::floatToString($value);
-                        }
-                        $value = (string)$value;
-                        break;
-                    case 'DateTime':
-                        if (!is_numeric($value)) {
-                            $value = strtotime($value);
-                        }
-                        $value = date('c', $value);
-                        break;
-                    default:
-                        if (class_exists("simialbi\\yii2\\ews\\models\\$dataType")) {
-                            if (is_array($value)) {
-                                foreach ($value as $k => $item) {
-                                    /** @var ActiveRecord $item */
-                                    $value[$k] = $this->prepareInsertValues(get_class($item), $item->getDirtyAttributes(), $params)[0];
-                                }
-                            } else {
-                                /** @var ActiveRecord $value */
-                                $value =  $this->prepareInsertValues(get_class($value), $value->getDirtyAttributes(), $params);
-                            }
-                        }
-                        break;
-                }
-
-                if ($mapping[$name]['foreignModel']) {
-                    $tmp = explode('.', $mapping[$name]['foreignField']);
-                    $field = array_shift($tmp);
-                    if (isset($val[$field]) && is_object($val[$field])) {
-                        $val[$field]->{$tmp[0]} = $value;
-                    } else {
-//                    if ($isArray) {
-//                        $val[$field] = Yii::createObject(ArrayHelper::merge(
-//                            ['class' => $mapping[$name]['foreignModel']],
-//                            [$tmp[0] => $value]
-//                        ));
-//                    } else {
-                        $val[$field] = Yii::createObject(ArrayHelper::merge(
-                            ['class' => $mapping[$name]['foreignModel']],
-                            [$tmp[0] => $value]
-                        ));
-//                    }
-                    }
-                } else {
-                    $val[$mapping[$name]['foreignField']] = $value;
-                }
-            }
-            $items[] = Yii::createObject($val);
-        }
-
-        return $items;
     }
 
     /**
@@ -484,23 +389,6 @@ class QueryBuilder extends \yii\db\QueryBuilder
     }
 
     /**
-     * {@inheritDoc}
-     */
-    protected function defaultExpressionBuilders()
-    {
-        return [
-            'yii\db\conditions\ConjunctionCondition' => 'simialbi\yii2\ews\conditions\ConjunctionConditionBuilder',
-            'yii\db\conditions\NotCondition' => 'simialbi\yii2\ews\conditions\NotConditionBuilder',
-            'yii\db\conditions\AndCondition' => 'simialbi\yii2\ews\conditions\ConjunctionConditionBuilder',
-            'yii\db\conditions\OrCondition' => 'simialbi\yii2\ews\conditions\ConjunctionConditionBuilder',
-            'yii\db\conditions\LikeCondition' => 'simialbi\yii2\ews\conditions\LikeConditionBuilder',
-            'yii\db\conditions\SimpleCondition' => 'simialbi\yii2\ews\conditions\SimpleConditionBuilder',
-            'yii\db\conditions\HashCondition' => 'simialbi\yii2\ews\conditions\HashConditionBuilder',
-        ];
-    }
-
-
-    /**
      * Get field URI from property
      *
      * @param string $property
@@ -561,5 +449,128 @@ class QueryBuilder extends \yii\db\QueryBuilder
         }
 
         return null;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @throws NotSupportedException
+     */
+    protected function prepareInsertValues($table, $columns, $params = [])
+    {
+        /** @var ActiveRecord $table */
+        $mapping = $table::attributeMapping();
+
+        $items = [];
+        if ($columns instanceof Query) {
+            throw new NotSupportedException('Nesting is not supported by EWS');
+        } else {
+            $val = [
+                'class' => $table::modelName()
+            ];
+            foreach ($columns as $name => $value) {
+                if (!isset($mapping[$name]) || !isset($mapping[$name]['foreignField'])) {
+                    continue;
+                }
+
+                if (count($mapping[$name]['dataType']) > 1) {
+                    if (false !== in_array('\\DateTime', $mapping[$name]['dataType'])) {
+                        $dataType = 'DateTime';
+                    } else {
+                        $dataType = 'string';
+                    }
+                } else {
+                    $dataType = $mapping[$name]['dataType'][0];
+                }
+
+                if (substr($dataType, -2) === '[]') {
+                    $dataType = substr($dataType, 0, -2);
+                    if (!is_array($value)) {
+                        $value = [$value];
+                    }
+                }
+
+                // Typecast
+                switch ($dataType) {
+                    case 'int':
+                    case 'integer':
+                        $value = (int)$value;
+                        break;
+                    case 'boolean':
+                    case 'bool':
+                        $value = (bool)$value;
+                        break;
+                    case 'double':
+                    case 'float':
+                        $value = (float)$value;
+                        break;
+                    case 'string':
+                        if (is_float($value)) {
+                            $value = StringHelper::floatToString($value);
+                        }
+                        $value = (string)$value;
+                        break;
+                    case 'DateTime':
+                        if (!is_numeric($value)) {
+                            $value = strtotime($value);
+                        }
+                        $value = date('c', $value);
+                        break;
+                    default:
+                        if (class_exists("simialbi\\yii2\\ews\\models\\$dataType")) {
+                            if (is_array($value)) {
+                                foreach ($value as $k => $item) {
+                                    /** @var ActiveRecord $item */
+                                    $value[$k] = $this->prepareInsertValues(get_class($item), $item->getDirtyAttributes(), $params)[0];
+                                }
+                            } else {
+                                /** @var ActiveRecord $value */
+                                $value = $this->prepareInsertValues(get_class($value), $value->getDirtyAttributes(), $params);
+                            }
+                        }
+                        break;
+                }
+
+                if ($mapping[$name]['foreignModel']) {
+                    $tmp = explode('.', $mapping[$name]['foreignField']);
+                    $field = array_shift($tmp);
+                    if (isset($val[$field]) && is_object($val[$field])) {
+                        $val[$field]->{$tmp[0]} = $value;
+                    } else {
+//                    if ($isArray) {
+//                        $val[$field] = Yii::createObject(ArrayHelper::merge(
+//                            ['class' => $mapping[$name]['foreignModel']],
+//                            [$tmp[0] => $value]
+//                        ));
+//                    } else {
+                        $val[$field] = Yii::createObject(ArrayHelper::merge(
+                            ['class' => $mapping[$name]['foreignModel']],
+                            [$tmp[0] => $value]
+                        ));
+//                    }
+                    }
+                } else {
+                    $val[$mapping[$name]['foreignField']] = $value;
+                }
+            }
+            $items[] = Yii::createObject($val);
+        }
+
+        return $items;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function defaultExpressionBuilders()
+    {
+        return [
+            'yii\db\conditions\ConjunctionCondition' => 'simialbi\yii2\ews\conditions\ConjunctionConditionBuilder',
+            'yii\db\conditions\NotCondition' => 'simialbi\yii2\ews\conditions\NotConditionBuilder',
+            'yii\db\conditions\AndCondition' => 'simialbi\yii2\ews\conditions\ConjunctionConditionBuilder',
+            'yii\db\conditions\OrCondition' => 'simialbi\yii2\ews\conditions\ConjunctionConditionBuilder',
+            'yii\db\conditions\LikeCondition' => 'simialbi\yii2\ews\conditions\LikeConditionBuilder',
+            'yii\db\conditions\SimpleCondition' => 'simialbi\yii2\ews\conditions\SimpleConditionBuilder',
+            'yii\db\conditions\HashCondition' => 'simialbi\yii2\ews\conditions\HashConditionBuilder',
+        ];
     }
 }

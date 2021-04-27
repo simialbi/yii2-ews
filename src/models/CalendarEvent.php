@@ -6,6 +6,7 @@
 
 namespace simialbi\yii2\ews\models;
 
+use jamesiarmes\PhpEws\Enumeration\BodyTypeType;
 use jamesiarmes\PhpEws\Enumeration\CalendarItemTypeType;
 use jamesiarmes\PhpEws\Enumeration\LegacyFreeBusyType;
 use jamesiarmes\PhpEws\Type\CalendarItemType;
@@ -23,6 +24,7 @@ use simialbi\yii2\ews\ActiveRecord;
  * @property string|\DateTime|integer $end => End
  * @property string $subject => Subject
  * @property string $body => \jamesiarmes\PhpEws\Type\BodyType:Body._
+ * @property string $format => \jamesiarmes\PhpEws\Type\BodyType:Body.BodyType
  * @property string $type => CalendarItemType
  * @property boolean $isRecurring => IsRecurring
  * @property boolean $isAllDay => IsAllDayEvent
@@ -60,6 +62,10 @@ class CalendarEvent extends ActiveRecord
                 CalendarItemTypeType::RECURRING_MASTER,
                 CalendarItemTypeType::SINGLE
             ]],
+            ['format', 'in', 'range' => [
+                BodyTypeType::HTML,
+                BodyTypeType::TEXT
+            ]],
             [['organizer', 'requiredAttendees', 'optionalAttendees'], 'safe'],
             [
                 'status',
@@ -76,7 +82,8 @@ class CalendarEvent extends ActiveRecord
 
             ['status', 'default', 'value' => LegacyFreeBusyType::BUSY],
             ['type', 'default', 'value' => CalendarItemTypeType::SINGLE],
-            [['isRecurring', 'isAllDay', 'isCancelled', 'isOnline'], 'default', 'value' => false]
+            [['isRecurring', 'isAllDay', 'isCancelled', 'isOnline'], 'default', 'value' => false],
+            ['format', 'default', 'value' => BodyTypeType::HTML]
         ];
     }
 }
