@@ -129,89 +129,6 @@ class Command extends Component
     }
 
     /**
-     * Performs the actual statement
-     *
-     * @param string|null $method method of the [[\jamesiarmes\PhpEws\Client]] to be called
-     *
-     * @return mixed
-     * @throws Exception
-     */
-    protected function queryInternal($method = null)
-    {
-        $request = $this->getRequest();
-        if (null === $method) {
-            $method = substr(StringHelper::basename(get_class($request)), 0, -4);
-        }
-        $key = $method . ': ' . serialize($request);
-        if ($method !== '') {
-            $info = $this->db->getQueryCacheInfo($this->queryCacheDuration, $this->queryCacheDependency);
-            if (is_array($info)) {
-                /* @var $cache \yii\caching\CacheInterface */
-                $cache = $info[0];
-                $result = $cache->get($key);
-                if (is_array($result) && isset($result[0])) {
-                    Yii::debug('Query result served from cache', __METHOD__);
-                    return $result[0];
-                }
-            }
-        }
-
-        try {
-            if ($this->db->enableProfiling) {
-                Yii::beginProfile($key, __METHOD__);
-            }
-            if ($this->db->enableLogging) {
-                Yii::info($key, __METHOD__);
-            }
-
-            /** @var \jamesiarmes\PhpEws\Response\ResponseMessageType $response */
-            $response = call_user_func([$this->db->getClient(), $method], $request);
-
-            if ($response->ResponseCode !== ResponseCodeType::NO_ERROR) {
-                throw new Exception($response->MessageText, [
-                    'responseCode' => $response->ResponseCode,
-                    'responseClass' => $response->ResponseClass
-                ]);
-            }
-
-            /** @var \jamesiarmes\PhpEws\Response\FindItemResponseMessageType $message */
-            $message = ArrayHelper::getValue($response, "ResponseMessages.{$method}ResponseMessage");
-            if (is_array($message)) {
-                $message = array_shift($message);
-            }
-
-            switch ($method) {
-                case 'FindItem':
-                    $result = ArrayHelper::getValue($message, 'RootFolder.Items');
-                    break;
-                case 'FindFolder':
-                    $result = ArrayHelper::getValue($message, 'RootFolder.Folders');
-                    break;
-                default:
-                    $result = [[]];
-                    break;
-            }
-
-            $result = array_shift($result);
-        } catch (Exception $e) {
-            throw $e;
-        } catch (\Exception $e) {
-            throw new Exception($e->getMessage());
-        } finally {
-            if ($this->db->enableProfiling) {
-                Yii::endProfile($key, __METHOD__);
-            }
-        }
-
-        if (isset($cache, $key, $info)) {
-            $cache->set($key, [$result], $info[1], $info[2]);
-            Yii::debug('Saved query result in cache', __METHOD__);
-        }
-
-        return $result;
-    }
-
-    /**
      * Executes the request
      * This method should only be used for executing non-query operations, such as `INSERT`, `DELETE`, `UPDATE` etc.
      * No result set will be returned.
@@ -261,5 +178,98 @@ class Command extends Component
         }
 
         return true;
+    }
+
+    /**
+     * Performs the actual statement
+     *
+     * @param string|null $method method of the [[\jamesiarmes\PhpEws\Client]] to be called
+     *
+     * @return mixed
+     * @throws Exception
+     */
+    protected function queryInternal($method = null)
+    {
+        $request = $this->getRequest();
+        if (null === $method) {
+            $method = substr(StringHelper::basename(get_class($request)), 0, -4);
+        }
+        $key = $method . ': ' . serialize($request);
+        if ($method !== '') {
+            $info = $this->db->getQueryCacheInfo($this->queryCacheDuration, $this->queryCacheDependency);
+            if (is_array($info)) {
+                /* @var $cache \yii\caching\CacheInterface */
+                $cache = $info[0];
+                $result = $cache->get($key);
+                if (is_array($result) && isset($result[0])) {
+                    Yii::debug('Query result served from cache', __METHOD__);
+                    return $result[0];
+                }
+            }
+        }
+
+        try {
+            if ($this->db->enableProfiling) {
+                Yii::beginProfile($key, __METHOD__);
+            }
+            if ($this->db->enableLogging) {
+                Yii::info($key, __METHOD__);
+            }
+
+            /** @var \jamesiarmes\PhpEws\Response\ResponseMessageType $response */
+            $response = call_user_func([$this->db->getClient(), $method], $request);
+
+            /** @var \jamesiarmes\PhpEws\Response\FindItemResponseMessageType $message */
+            $message = ArrayHelper::getValue($response, "ResponseMessages.{$method}ResponseMessage");
+
+            if (is_array($message)) {
+                $message = array_shift($message);
+            }
+
+            if ($message->ResponseCode !== ResponseCodeType::NO_ERROR) {
+                throw new Exception($message->MessageText, [
+                    'responseCode' => $message->ResponseCode,
+                    'responseClass' => $message->ResponseClass
+                ]);
+            }
+
+            switch ($method) {
+                case 'FindItem':
+                    $result = ArrayHelper::getValue($message, 'RootFolder.Items');
+                    break;
+                case 'FindFolder':
+                    $result = ArrayHelper::getValue($message, 'RootFolder.Folders');
+                    break;
+                default:
+                    $result = [];
+                    break;
+            }
+
+            // TODO: Find better solution
+            if (!is_array($result)) {
+                $r = new \ReflectionClass($result);
+                foreach ($r->getProperties() as $property) {
+                    if ($property->isPublic() && is_array($result->{$property->name}) && !empty($result->{$property->name})) {
+                        $result = $result->{$property->name};
+                        break;
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            throw new Exception($e->getMessage());
+        } finally {
+            if ($this->db->enableProfiling) {
+                Yii::endProfile($key, __METHOD__);
+            }
+        }
+
+        if (isset($cache, $key, $info)) {
+            $cache->set($key, [$result], $info[1], $info[2]);
+            Yii::debug('Saved query result in cache', __METHOD__);
+        }
+
+        return $result;
     }
 }

@@ -81,7 +81,11 @@ class ActiveRecord extends BaseActiveRecord
      */
     public static function updateAll($attributes, $condition = null)
     {
-        parent::updateAll($attributes, $condition);
+        $params = [];
+        $command = static::getDb()->createCommand();
+        $command->update(static::class, $attributes, $condition, $params);
+
+        return $command->execute();
     }
 
     /**

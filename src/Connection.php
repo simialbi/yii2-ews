@@ -11,7 +11,6 @@ use jamesiarmes\PhpEws\Request\BaseRequestType;
 use Yii;
 use yii\base\Component;
 use yii\caching\CacheInterface;
-use yii\validators\EmailValidator;
 
 /**
  * Class Service
@@ -35,10 +34,6 @@ class Connection extends Component
      * @var string The user's plain-text password.
      */
     public $password;
-    /**
-     * @var array The mailboxes to check
-     */
-    public $mailboxes = [];
     /**
      * @var bool whether to enable logging of database queries. Defaults to true.
      * You may want to disable this option in a production environment to gain performance
@@ -79,6 +74,18 @@ class Connection extends Component
     public $queryCache = 'cache';
 
     /**
+     * @var array Sets additional cURL options that will be set in the SOAP client.
+     * The keys are the one of the [[CURLOPT_*]] constants and the values the correspondig values:
+     * ```php
+     * [
+     *     CURLOPT_CONNECTTIMEOUT => 10,
+     *     CURLOPT_DNS_CACHE_TIMEOUT => 60
+     * ]
+     * ```
+     */
+    public $curlOptions = [];
+
+    /**
      * @var Client EWS Client instance.
      */
     private $_client;
@@ -88,31 +95,13 @@ class Connection extends Component
     private $_queryCacheInfo = [];
 
     /**
-     * {@inheritDoc}
-     */
-    public function init()
-    {
-        parent::init();
-
-        array_unshift($this->mailboxes, $this->username);
-        $this->mailboxes = array_unique($this->mailboxes);
-
-        $validator = new EmailValidator(['enableIDN' => function_exists('idn_to_ascii')]);
-        foreach ($this->mailboxes as $k => $mailbox) {
-            if (!$validator->validate($mailbox)) {
-                Yii::warning("Mailbox '$mailbox' is not a valid email address", __METHOD__);
-                unset($this->mailboxes[$k]);
-            }
-        }
-    }
-
-    /**
      * @return Client
      */
     public function getClient(): Client
     {
         if (empty($this->_client) || !$this->_client instanceof Client) {
             $this->_client = new Client($this->server, $this->username, $this->password);
+            $this->_client->setCurlOptions($this->curlOptions);
         }
 
         return $this->_client;

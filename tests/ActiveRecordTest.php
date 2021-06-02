@@ -6,9 +6,12 @@
 
 namespace yiiunit\extensions\ews;
 
+use jamesiarmes\PhpEws\Enumeration\CalendarItemTypeType;
 use jamesiarmes\PhpEws\Enumeration\DefaultShapeNamesType;
 use jamesiarmes\PhpEws\Enumeration\DistinguishedFolderIdNameType;
+use jamesiarmes\PhpEws\Enumeration\LegacyFreeBusyType;
 use jamesiarmes\PhpEws\Enumeration\SortDirectionType;
+use jamesiarmes\PhpEws\Enumeration\UnindexedFieldURIType;
 use simialbi\yii2\ews\models\Attendee;
 use simialbi\yii2\ews\models\CalendarEvent;
 use Yii;
@@ -177,5 +180,70 @@ class ActiveRecordTest extends TestCase
         $this->assertInstanceOf('jamesiarmes\PhpEws\Type\EmailAddressType', $attendee->Mailbox);
         $this->assertEquals('john.doe@example.com', $attendee->Mailbox->EmailAddress);
         $this->assertEquals('John Doe', $attendee->Mailbox->Name);
+    }
+
+    public function testQueryBuilderUpdate()
+    {
+        $startDate = Yii::$app->formatter->asDate('+2 hours', 'yyyy-MM-dd HH:mm');
+        $endDate = Yii::$app->formatter->asDate('+2.5 hours', 'yyyy-MM-dd HH:mm');
+        $event = new CalendarEvent();
+
+        $event->subject = 'Test';
+        $event->body = '<p>This is a test</p>';
+        $event->start = $startDate;
+        $event->end = $endDate;
+        $event->requiredAttendees = [
+            new Attendee(['name' => 'John Doe', 'email' => 'john.doe@example.com']),
+            new Attendee(['name' => 'Jane Doe', 'email' => 'jane.doe@example.com'])
+        ];
+
+        $this->assertEquals(true, $event->validate());
+
+        $values = $event->getDirtyAttributes();
+        $params = [];
+        /** @var \jamesiarmes\PhpEws\Request\CreateItemType $request */
+        $request = $event::getDb()->getQueryBuilder()->update(get_class($event), $values, [], $params);
+        $this->assertEquals(false, $request);
+
+        $request = $event::getDb()->getQueryBuilder()->update(get_class($event), $values, [
+            'id' => 'AAajslgkha32394isdg==',
+            'changeKey' => '7007ACC7-3202-11D1-AAD2-00805FC1270E'
+        ], $params);
+
+        $this->assertInstanceOf('jamesiarmes\PhpEws\Request\UpdateItemType', $request);
+        $this->assertInstanceOf('jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfItemChangesType', $request->ItemChanges);
+        $this->assertEquals(1, count($request->ItemChanges->ItemChange));
+        $this->assertInstanceOf('jamesiarmes\PhpEws\Type\ItemChangeType', $request->ItemChanges->ItemChange[0]);
+        $this->assertInstanceOf('jamesiarmes\PhpEws\Type\ItemIdType', $request->ItemChanges->ItemChange[0]->ItemId);
+        $this->assertEquals('AAajslgkha32394isdg==', $request->ItemChanges->ItemChange[0]->ItemId->Id);
+        $this->assertEquals('7007ACC7-3202-11D1-AAD2-00805FC1270E', $request->ItemChanges->ItemChange[0]->ItemId->ChangeKey);
+        $updates = $request->ItemChanges->ItemChange[0]->Updates;
+        $this->assertInstanceOf('jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfItemChangeDescriptionsType', $updates);
+        $this->assertEquals(10, count($updates->SetItemField));
+        foreach ($updates->SetItemField as $update) {
+            $this->assertInstanceOf('jamesiarmes\PhpEws\Type\SetItemFieldType', $update);
+            $this->assertInstanceOf('jamesiarmes\PhpEws\Type\PathToUnindexedFieldType', $update->FieldURI);
+            $this->assertInstanceOf('jamesiarmes\PhpEws\Type\CalendarItemType', $update->CalendarItem);
+        }
+        $this->assertEquals(UnindexedFieldURIType::ITEM_SUBJECT, $updates->SetItemField[0]->FieldURI->FieldURI);
+        $this->assertEquals($event->subject, $updates->SetItemField[0]->CalendarItem->Subject);
+        $this->assertEquals(UnindexedFieldURIType::ITEM_BODY, $updates->SetItemField[1]->FieldURI->FieldURI);
+        $this->assertEquals($event->body, $updates->SetItemField[1]->CalendarItem->Body->_);
+        $this->assertEquals(UnindexedFieldURIType::CALENDAR_START, $updates->SetItemField[2]->FieldURI->FieldURI);
+        $this->assertEquals(date('c', strtotime($startDate)), $updates->SetItemField[2]->CalendarItem->Start);
+        $this->assertEquals(UnindexedFieldURIType::CALENDAR_END, $updates->SetItemField[3]->FieldURI->FieldURI);
+        $this->assertEquals(date('c', strtotime($endDate)), $updates->SetItemField[3]->CalendarItem->End);
+        $this->assertEquals(UnindexedFieldURIType::CALENDAR_LEGACY_FREE_BUSY_STATUS, $updates->SetItemField[4]->FieldURI->FieldURI);
+        $this->assertEquals(LegacyFreeBusyType::BUSY, $updates->SetItemField[4]->CalendarItem->LegacyFreeBusyStatus);
+        $this->assertEquals(UnindexedFieldURIType::CALENDAR_ITEM_TYPE, $updates->SetItemField[5]->FieldURI->FieldURI);
+        $this->assertEquals(CalendarItemTypeType::SINGLE, $updates->SetItemField[5]->CalendarItem->CalendarItemType);
+        $this->assertEquals(UnindexedFieldURIType::CALENDAR_IS_RECURRING, $updates->SetItemField[6]->FieldURI->FieldURI);
+        $this->assertEquals(false, $updates->SetItemField[6]->CalendarItem->IsRecurring);
+        $this->assertEquals(UnindexedFieldURIType::CALENDAR_IS_ALL_DAY_EVENT, $updates->SetItemField[7]->FieldURI->FieldURI);
+        $this->assertEquals(false, $updates->SetItemField[7]->CalendarItem->IsAllDayEvent);
+        $this->assertEquals(UnindexedFieldURIType::CALENDAR_IS_CANCELLED, $updates->SetItemField[8]->FieldURI->FieldURI);
+        $this->assertEquals(false, $updates->SetItemField[8]->CalendarItem->IsCancelled);
+        $this->assertEquals(UnindexedFieldURIType::CALENDAR_IS_ONLINE_MEETING, $updates->SetItemField[9]->FieldURI->FieldURI);
+        $this->assertEquals(false, $updates->SetItemField[9]->CalendarItem->IsOnlineMeeting);
     }
 }
