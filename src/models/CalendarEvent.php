@@ -25,6 +25,7 @@ use simialbi\yii2\ews\ActiveRecord;
  * @property string $subject => Subject
  * @property string $body => \jamesiarmes\PhpEws\Type\BodyType:Body._
  * @property string $format => \jamesiarmes\PhpEws\Type\BodyType:Body.BodyType
+ * @property string $location => Location
  * @property string $type => CalendarItemType
  * @property boolean $isRecurring => IsRecurring
  * @property boolean $isAllDay => IsAllDayEvent
@@ -52,7 +53,7 @@ class CalendarEvent extends ActiveRecord
     public function rules()
     {
         return [
-            [['id', 'changeKey', 'subject', 'body'], 'string'],
+            [['id', 'changeKey', 'subject', 'body', 'location'], 'string'],
             ['start', 'datetime', 'format' => 'yyyy-MM-dd HH:mm', 'timestampAttribute' => 'start'],
             ['end', 'datetime', 'format' => 'yyyy-MM-dd HH:mm', 'timestampAttribute' => 'end'],
             [['isRecurring', 'isAllDay', 'isCancelled', 'isOnline'], 'boolean'],
