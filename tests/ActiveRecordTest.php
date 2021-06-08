@@ -57,6 +57,11 @@ class ActiveRecordTest extends TestCase
                 'foreignModel' => '\jamesiarmes\PhpEws\Type\BodyType',
                 'foreignField' => 'Body._'
             ],
+            'location' => [
+                'dataType' => ['string'],
+                'foreignModel' => null,
+                'foreignField' => 'Location'
+            ],
             'type' => [
                 'dataType' => ['string'],
                 'foreignModel' => null,
@@ -155,11 +160,18 @@ class ActiveRecordTest extends TestCase
         $this->assertEquals(true, $event->validate());
 
         $values = $event->getDirtyAttributes();
-        $params = [];
+        $params = [
+            'mailbox' => 'test@example.com'
+        ];
         /** @var \jamesiarmes\PhpEws\Request\CreateItemType $request */
         $request = $event::getDb()->getQueryBuilder()->insert(get_class($event), $values, $params);
 
         $this->assertInstanceOf('jamesiarmes\PhpEws\Request\CreateItemType', $request);
+        $this->assertInstanceOf('jamesiarmes\PhpEws\Type\TargetFolderIdType', $request->SavedItemFolderId);
+        $this->assertInstanceOf('jamesiarmes\PhpEws\Type\DistinguishedFolderIdType', $request->SavedItemFolderId->DistinguishedFolderId);
+        $this->assertEquals('calendar', $request->SavedItemFolderId->DistinguishedFolderId->Id);
+        $this->assertInstanceOf('jamesiarmes\PhpEws\Type\EmailAddressType', $request->SavedItemFolderId->DistinguishedFolderId->Mailbox);
+        $this->assertEquals('test@example.com', $request->SavedItemFolderId->DistinguishedFolderId->Mailbox->EmailAddress);
         $this->assertInstanceOf('jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfAllItemsType', $request->Items);
         $calendarItem = $request->Items->CalendarItem[0];
         $this->assertInstanceOf('jamesiarmes\PhpEws\Type\CalendarItemType', $calendarItem);

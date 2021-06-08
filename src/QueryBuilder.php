@@ -245,6 +245,8 @@ class QueryBuilder extends \yii\db\QueryBuilder
     {
         /** @var ActiveRecord $table */
         $config = [];
+
+        $mailbox = ArrayHelper::remove($params, 'mailbox');
         if ($table::modelName() === FolderType::class) {
             $config['class'] = CreateFolderType::class;
             $config['Folders'] = Yii::createObject([
@@ -263,6 +265,13 @@ class QueryBuilder extends \yii\db\QueryBuilder
                             'Id' => DistinguishedFolderIdNameType::CALENDAR
                         ])
                     ]);
+
+                    if ($mailbox) {
+                        $config['SavedItemFolderId']->DistinguishedFolderId->Mailbox = Yii::createObject([
+                            'class' => EmailAddressType::class,
+                            'EmailAddress' => $mailbox
+                        ]);
+                    }
                     break;
                 case MessageType::class:
                     $config['MessageDisposition'] = MessageDispositionType::SEND_AND_SAVE_COPY;
