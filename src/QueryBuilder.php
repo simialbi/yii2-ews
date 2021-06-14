@@ -101,23 +101,23 @@ class QueryBuilder extends \yii\db\QueryBuilder
         $this->_config = [
             'class' => FindItemType::class
         ];
-        if (empty($params['folderId'])) {
+        if (!isset($params['folderId']) || empty($params['folderId'])) {
             $params['folderId'] = DistinguishedFolderIdNameType::INBOX;
-        }
-        if ($query instanceof ActiveQuery) {
-            /** @var ActiveQuery $query */
-            $this->_modelClass = $query->modelClass;
+            if ($query instanceof ActiveQuery) {
+                /** @var ActiveQuery $query */
+                $this->_modelClass = $query->modelClass;
 
-            switch ($this->_modelClass) {
-                case Folder::class:
-                    $this->_config['class'] = FindFolderType::class;
-                    break;
-                case CalendarEvent::class:
-                    $params['folderId'] = DistinguishedFolderIdNameType::CALENDAR;
-                    break;
-                case Contact::class:
-                    $params['folderId'] = DistinguishedFolderIdNameType::CONTACTS;
-                    break;
+                switch ($this->_modelClass) {
+                    case Folder::class:
+                        $this->_config['class'] = FindFolderType::class;
+                        break;
+                    case CalendarEvent::class:
+                        $params['folderId'] = DistinguishedFolderIdNameType::CALENDAR;
+                        break;
+                    case Contact::class:
+                        $params['folderId'] = DistinguishedFolderIdNameType::CONTACTS;
+                        break;
+                }
             }
         }
 
@@ -183,14 +183,24 @@ class QueryBuilder extends \yii\db\QueryBuilder
         ];
         $mailbox = ArrayHelper::remove($tables, 'mailbox');
         if (empty($tables)) {
-            $config['DistinguishedFolderId'] = Yii::createObject([
-                'class' => DistinguishedFolderIdType::class,
-                'Id' => $params['folderId']
-            ]);
             if ($mailbox) {
-                $config['DistinguishedFolderId']->Mailbox = Yii::createObject([
-                    'class' => EmailAddressType::class,
-                    'EmailAddress' => $mailbox
+                if (!is_array($mailbox)) {
+                    $mailbox = [$mailbox];
+                }
+                foreach ($mailbox as $mb) {
+                    $config['DistinguishedFolderId'][] = Yii::createObject([
+                        'class' => DistinguishedFolderIdType::class,
+                        'Id' => $params['folderId'],
+                        'Mailbox' => Yii::createObject([
+                            'class' => EmailAddressType::class,
+                            'EmailAddress' => $mb
+                        ])
+                    ]);
+                }
+            } else {
+                $config['DistinguishedFolderId'][] = Yii::createObject([
+                    'class' => DistinguishedFolderIdType::class,
+                    'Id' => $params['folderId']
                 ]);
             }
         } else {

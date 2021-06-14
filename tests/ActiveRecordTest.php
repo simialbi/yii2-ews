@@ -117,10 +117,12 @@ class ActiveRecordTest extends TestCase
         $this->assertEquals(true, $request->ItemShape->ConvertHtmlCodePageToUTF8);
         $this->assertEquals(DefaultShapeNamesType::ALL_PROPERTIES, $request->ItemShape->BaseShape);
         $this->assertInstanceOf('jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfBaseFolderIdsType', $request->ParentFolderIds);
-        $this->assertInstanceOf('jamesiarmes\PhpEws\Type\DistinguishedFolderIdType', $request->ParentFolderIds->DistinguishedFolderId);
-        $this->assertEquals(DistinguishedFolderIdNameType::CALENDAR, $request->ParentFolderIds->DistinguishedFolderId->Id);
-        $this->assertInstanceOf('jamesiarmes\PhpEws\Type\EmailAddressType', $request->ParentFolderIds->DistinguishedFolderId->Mailbox);
-        $this->assertEquals('john.doe@example.com', $request->ParentFolderIds->DistinguishedFolderId->Mailbox->EmailAddress);
+        $this->assertIsArray($request->ParentFolderIds->DistinguishedFolderId);
+        $this->assertCount(1, $request->ParentFolderIds->DistinguishedFolderId);
+        $this->assertInstanceOf('jamesiarmes\PhpEws\Type\DistinguishedFolderIdType', $request->ParentFolderIds->DistinguishedFolderId[0]);
+        $this->assertEquals(DistinguishedFolderIdNameType::CALENDAR, $request->ParentFolderIds->DistinguishedFolderId[0]->Id);
+        $this->assertInstanceOf('jamesiarmes\PhpEws\Type\EmailAddressType', $request->ParentFolderIds->DistinguishedFolderId[0]->Mailbox);
+        $this->assertEquals('john.doe@example.com', $request->ParentFolderIds->DistinguishedFolderId[0]->Mailbox->EmailAddress);
         $this->assertInstanceOf('jamesiarmes\PhpEws\Type\RestrictionType', $request->Restriction);
         $this->assertInstanceOf('jamesiarmes\PhpEws\Type\AndType', $request->Restriction->And);
         $this->assertInstanceOf('jamesiarmes\PhpEws\Type\IsGreaterThanOrEqualToType', $request->Restriction->And->IsGreaterThanOrEqualTo);
@@ -224,14 +226,16 @@ class ActiveRecordTest extends TestCase
 
         $this->assertInstanceOf('jamesiarmes\PhpEws\Request\UpdateItemType', $request);
         $this->assertInstanceOf('jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfItemChangesType', $request->ItemChanges);
-        $this->assertEquals(1, count($request->ItemChanges->ItemChange));
+        $this->assertIsArray($request->ItemChanges->ItemChange);
+        $this->assertCount(1, $request->ItemChanges->ItemChange);
         $this->assertInstanceOf('jamesiarmes\PhpEws\Type\ItemChangeType', $request->ItemChanges->ItemChange[0]);
         $this->assertInstanceOf('jamesiarmes\PhpEws\Type\ItemIdType', $request->ItemChanges->ItemChange[0]->ItemId);
         $this->assertEquals('AAajslgkha32394isdg==', $request->ItemChanges->ItemChange[0]->ItemId->Id);
         $this->assertEquals('7007ACC7-3202-11D1-AAD2-00805FC1270E', $request->ItemChanges->ItemChange[0]->ItemId->ChangeKey);
         $updates = $request->ItemChanges->ItemChange[0]->Updates;
         $this->assertInstanceOf('jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfItemChangeDescriptionsType', $updates);
-        $this->assertEquals(10, count($updates->SetItemField));
+        $this->assertIsArray($updates->SetItemField);
+        $this->assertCount(10, $updates->SetItemField);
         foreach ($updates->SetItemField as $update) {
             $this->assertInstanceOf('jamesiarmes\PhpEws\Type\SetItemFieldType', $update);
             $this->assertInstanceOf('jamesiarmes\PhpEws\Type\PathToUnindexedFieldType', $update->FieldURI);
