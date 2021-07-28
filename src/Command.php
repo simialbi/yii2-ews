@@ -8,6 +8,7 @@ namespace simialbi\yii2\ews;
 
 use jamesiarmes\PhpEws\Enumeration\ResponseCodeType;
 use jamesiarmes\PhpEws\Request\BaseRequestType;
+use phpDocumentor\Reflection\Types\False_;
 use Yii;
 use yii\base\Component;
 use yii\helpers\ArrayHelper;
@@ -62,10 +63,10 @@ class Command extends Component
     /**
      * Specifies the request to be executed.
      * The previous request (if any) will be discarded, and params will be cleared as well.
-     * @param BaseRequestType $request
+     * @param BaseRequestType|null $request
      * @return $this
      */
-    public function setRequest(BaseRequestType $request): Command
+    public function setRequest(?BaseRequestType $request): Command
     {
         if ($request !== $this->_request) {
             $this->params = [];
@@ -141,13 +142,27 @@ class Command extends Component
 
     /**
      * Executes the statement and returns ALL rows at once.
-     * @param int $fetchMode for compatibility with [[\yii\db\Command]]
-     * @return array all rows of the query result. Each array element is an array representing a row of data.
-     * An empty array is returned if the query results in nothing.
+     * @param int|null $fetchMode for compatibility with [[\yii\db\Command]]
+     * @return array|\jamesiarmes\PhpEws\ArrayType\ArrayOfRealItemsType all rows of the query result. Each array element
+     * is an array representing a row of data. An empty array is returned if the query results in nothing.
      * @throws \yii\base\InvalidConfigException
      * @throws Exception
      */
-    public function queryAll($fetchMode = null): array
+    public function queryAll(?int $fetchMode = null)
+    {
+        return $this->queryInternal();
+    }
+
+    /**
+     * Executes the SQL statement and returns the first row of the result.
+     * This method is best used when only the first row of result is needed for a query.
+     * @param int $fetchMode the result fetch mode. Please refer to [PHP manual](https://secure.php.net/manual/en/pdostatement.setfetchmode.php)
+     * for valid fetch modes. If this parameter is null, the value set in [[fetchMode]] will be used.
+     * @return array|false the first row (in terms of an array) of the query result. False is returned if the query
+     * results in nothing.
+     * @throws Exception execution failed
+     */
+    public function queryOne($fetchMode = null)
     {
         return $this->queryInternal();
     }
@@ -156,17 +171,19 @@ class Command extends Component
      * Executes the request
      * This method should only be used for executing non-query operations, such as `INSERT`, `DELETE`, `UPDATE` etc.
      * No result set will be returned.
-     * @return boolean true if the request was successful, otherwise false
+     * @return \jamesiarmes\PhpEws\Type\ItemIdType|boolean true if the request was successful, otherwise false
      * @throws Exception execution failed
      */
-    public function execute(): bool
+    public function execute()
     {
+        /** @var \jamesiarmes\PhpEws\Request\CreateItemType $request */
         $request = $this->getRequest();
         if (!$request || !is_object($request)) {
             return false;
         }
         $method = substr(StringHelper::basename(get_class($request)), 0, -4);
         $key = $method . ': ' . serialize($request);
+        $return = false;
 
         try {
             if ($this->db->enableProfiling) {
@@ -191,6 +208,12 @@ class Command extends Component
                     'responseClass' => $message->ResponseClass
                 ]);
             }
+
+            foreach ($message->Items as $item) {
+                /** @var \jamesiarmes\PhpEws\Type\ItemType[] $item */
+                $return = $item[0]->ItemId;
+                break;
+            }
         } catch (Exception $e) {
             throw $e;
         } catch (\Exception $e) {
@@ -201,7 +224,7 @@ class Command extends Component
             }
         }
 
-        return true;
+        return !$return ? true : $return;
     }
 
     /**
@@ -212,7 +235,7 @@ class Command extends Component
      * @return mixed
      * @throws Exception
      */
-    protected function queryInternal($method = null)
+    protected function queryInternal(?string $method = null)
     {
         $request = $this->getRequest();
         if (null === $method) {
@@ -264,6 +287,9 @@ class Command extends Component
                 case 'FindFolder':
                     $result = ArrayHelper::getValue($message, 'RootFolder.Folders');
                     break;
+                case 'GetItem':
+                    $result = ArrayHelper::getValue($message, 'Items');
+                    break;
                 default:
                     $result = [];
                     break;
@@ -278,6 +304,9 @@ class Command extends Component
                         break;
                     }
                 }
+            }
+            if ($result instanceof \jamesiarmes\PhpEws\ArrayType\ArrayOfRealItemsType) {
+                $result = [];
             }
         } catch (Exception $e) {
             throw $e;

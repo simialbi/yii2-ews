@@ -17,7 +17,7 @@ class Exception extends \yii\db\Exception
     /**
      * {@inheritDoc}
      */
-    public function getName()
+    public function getName(): string
     {
         return 'Exchange Web Services Exception';
     }

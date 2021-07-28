@@ -29,7 +29,7 @@ class Attendee extends ActiveRecord
     /**
      * {@inheritDoc}
      */
-    public function rules()
+    public function rules(): array
     {
         return [
             ['name', 'string'],

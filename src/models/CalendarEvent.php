@@ -50,12 +50,12 @@ class CalendarEvent extends ActiveRecord
     /**
      * {@inheritDoc}
      */
-    public function rules()
+    public function rules(): array
     {
         return [
             [['id', 'changeKey', 'subject', 'body', 'location'], 'string'],
-            ['start', 'datetime', 'format' => 'yyyy-MM-dd HH:mm', 'timestampAttribute' => 'start'],
-            ['end', 'datetime', 'format' => 'yyyy-MM-dd HH:mm', 'timestampAttribute' => 'end'],
+            ['start', 'datetime', 'format' => 'yyyy-MM-dd HH:mm xxx', 'timestampAttribute' => 'start'],
+            ['end', 'datetime', 'format' => 'yyyy-MM-dd HH:mm xxx', 'timestampAttribute' => 'end'],
             [['isRecurring', 'isAllDay', 'isCancelled', 'isOnline'], 'boolean'],
             ['type', 'in', 'range' => [
                 CalendarItemTypeType::EXCEPTION,
@@ -82,8 +82,6 @@ class CalendarEvent extends ActiveRecord
             ],
 
             ['status', 'default', 'value' => LegacyFreeBusyType::BUSY],
-            ['type', 'default', 'value' => CalendarItemTypeType::SINGLE],
-            [['isRecurring', 'isAllDay', 'isCancelled', 'isOnline'], 'default', 'value' => false],
             ['format', 'default', 'value' => BodyTypeType::HTML]
         ];
     }

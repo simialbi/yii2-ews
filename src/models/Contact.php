@@ -19,7 +19,7 @@ use yii\helpers\ArrayHelper;
  * @property string $changeKey => \jamesiarmes\PhpEws\Type\ItemIdType:ItemId.ChangeKey
  * @property string $parentFolderId => \jamesiarmes\PhpEws\Type\FolderIdType:ParentFolderId.Id
  * @property string $parentFolderChangeKey => \jamesiarmes\PhpEws\Type\FolderIdType:ParentFolderId.ChangeKey
- * @property string $email => Mailbox.Email
+ * @property string $email => Mailbox.EmailAddress
  * @property string $name => Mailbox.Name
  */
 class Contact extends ActiveRecord

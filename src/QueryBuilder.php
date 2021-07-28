@@ -9,6 +9,7 @@ namespace simialbi\yii2\ews;
 use jamesiarmes\PhpEws\ArrayType\ArrayOfFoldersType;
 use jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfAllItemsType;
 use jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfBaseFolderIdsType;
+use jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfBaseItemIdsType;
 use jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfFieldOrdersType;
 use jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfItemChangeDescriptionsType;
 use jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfItemChangesType;
@@ -23,6 +24,7 @@ use jamesiarmes\PhpEws\Request\CreateFolderType;
 use jamesiarmes\PhpEws\Request\CreateItemType;
 use jamesiarmes\PhpEws\Request\FindFolderType;
 use jamesiarmes\PhpEws\Request\FindItemType;
+use jamesiarmes\PhpEws\Request\GetItemType;
 use jamesiarmes\PhpEws\Request\UpdateItemType;
 use jamesiarmes\PhpEws\Type\AggregateOnType;
 use jamesiarmes\PhpEws\Type\CalendarItemType;
@@ -95,41 +97,62 @@ class QueryBuilder extends \yii\db\QueryBuilder
      * @return array the generated Request (the first array element) and the corresponding parameters
      * injected to the request (the second array element).  The parameters returned
      * include those provided in `$params`.
+     * @throws \yii\base\InvalidConfigException
      */
-    public function build($query, $params = [])
+    public function build($query, $params = []): array
     {
         $this->_config = [
             'class' => FindItemType::class
         ];
-        if (!isset($params['folderId']) || empty($params['folderId'])) {
-            $params['folderId'] = DistinguishedFolderIdNameType::INBOX;
-            if ($query instanceof ActiveQuery) {
-                /** @var ActiveQuery $query */
-                $this->_modelClass = $query->modelClass;
+        if (isset($query->where['id'], $query->where['changeKey'])) {
+            $this->_config = [
+                'class' => GetItemType::class,
+                'ItemShape' => Yii::createObject([
+                    'class' => ItemResponseShapeType::class,
+                    'BaseShape' => DefaultShapeNamesType::ALL_PROPERTIES
+                ]),
+                'ItemIds' => Yii::createObject([
+                    'class' => NonEmptyArrayOfBaseItemIdsType::class,
+                    'ItemId' => [
+                        Yii::createObject([
+                            'class' => ItemIdType::class,
+                            'Id' => $query->where['id'],
+                            'ChangeKey' => $query->where['changeKey']
+                        ])
+                    ]
+                ])
+            ];
+        } else {
+            if (!isset($params['folderId']) || empty($params['folderId'])) {
+                $params['folderId'] = DistinguishedFolderIdNameType::INBOX;
+                if ($query instanceof ActiveQuery) {
+                    /** @var ActiveQuery $query */
+                    $this->_modelClass = $query->modelClass;
 
-                switch ($this->_modelClass) {
-                    case Folder::class:
-                        $this->_config['class'] = FindFolderType::class;
-                        break;
-                    case CalendarEvent::class:
-                        $params['folderId'] = DistinguishedFolderIdNameType::CALENDAR;
-                        break;
-                    case Contact::class:
-                        $params['folderId'] = DistinguishedFolderIdNameType::CONTACTS;
-                        break;
+                    switch ($this->_modelClass) {
+                        case Folder::class:
+                            $this->_config['class'] = FindFolderType::class;
+                            break;
+                        case CalendarEvent::class:
+                            $params['folderId'] = DistinguishedFolderIdNameType::CALENDAR;
+                            break;
+                        case Contact::class:
+                            $params['folderId'] = DistinguishedFolderIdNameType::CONTACTS;
+                            break;
+                    }
                 }
             }
-        }
 
-        $this->_config = ArrayHelper::merge(
-            $this->_config,
-            $this->buildSelect($query->select, $params, $query->distinct, $query->selectOption),
-            $this->buildFrom($query->from, $params),
-            $this->buildWhere($query->where, $params),
-            $this->buildOrderBy($query->orderBy),
-            $this->buildLimit($query->limit, $query->offset),
-            $this->buildGroupBy($query->groupBy)
-        );
+            $this->_config = ArrayHelper::merge(
+                $this->_config,
+                $this->buildSelect($query->select, $params, $query->distinct, $query->selectOption),
+                $this->buildFrom($query->from, $params),
+                $this->buildWhere($query->where, $params),
+                $this->buildOrderBy($query->orderBy),
+                $this->buildLimit($query->limit, $query->offset),
+                $this->buildGroupBy($query->groupBy)
+            );
+        }
 
         return [Yii::createObject($this->_config), $params];
     }
@@ -138,8 +161,9 @@ class QueryBuilder extends \yii\db\QueryBuilder
      * {@inheritDoc}
      *
      * @return array
+     * @throws \yii\base\InvalidConfigException
      */
-    public function buildSelect($columns, &$params, $distinct = false, $selectOption = null)
+    public function buildSelect($columns, &$params, $distinct = false, $selectOption = null): array
     {
         $config = [];
         $found = false;
@@ -175,8 +199,9 @@ class QueryBuilder extends \yii\db\QueryBuilder
      * {@inheritDoc}
      *
      * @return array
+     * @throws \yii\base\InvalidConfigException
      */
-    public function buildFrom($tables, &$params)
+    public function buildFrom($tables, &$params): array
     {
         $config = [
             'class' => NonEmptyArrayOfBaseFolderIdsType::class
@@ -218,8 +243,9 @@ class QueryBuilder extends \yii\db\QueryBuilder
     /**
      * {@inheritDoc}
      * @return array
+     * @throws \yii\base\InvalidConfigException
      */
-    public function buildOrderBy($columns)
+    public function buildOrderBy($columns): array
     {
         if (empty($columns)) {
             return [];
@@ -250,6 +276,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
      * @param string $table active record class name
      *
      * @return BaseRequestType|object
+     * @throws NotSupportedException|\yii\base\InvalidConfigException
      */
     public function insert($table, $columns, &$params)
     {
@@ -303,8 +330,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
      * @param string $table active record class name
      *
      * @return BaseRequestType|object|false
-     * @throws NotSupportedException
-     * @throws \yii\base\InvalidConfigException
+     * @throws NotSupportedException|\yii\base\InvalidConfigException
      */
     public function update($table, $columns, $condition, &$params)
     {
@@ -351,8 +377,9 @@ class QueryBuilder extends \yii\db\QueryBuilder
     /**
      * {@inheritDoc}
      * @return array
+     * @throws \yii\base\InvalidConfigException
      */
-    public function buildWhere($condition, &$params)
+    public function buildWhere($condition, &$params): array
     {
         $config = [
             'class' => RestrictionType::class
@@ -376,8 +403,9 @@ class QueryBuilder extends \yii\db\QueryBuilder
      * {@inheritDoc}
      *
      * @return array
+     * @throws \yii\base\InvalidConfigException
      */
-    public function buildGroupBy($columns)
+    public function buildGroupBy($columns): array
     {
         if (empty($columns)) {
             return [];
@@ -413,8 +441,9 @@ class QueryBuilder extends \yii\db\QueryBuilder
      * {@inheritDoc}
      *
      * @return array
+     * @throws \yii\base\InvalidConfigException
      */
-    public function buildLimit($limit, $offset)
+    public function buildLimit($limit, $offset): array
     {
         if (ctype_digit($limit) && ctype_digit($offset)) {
             return [
@@ -433,6 +462,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
     /**
      * {@inheritDoc}
      * @return array|object
+     * @throws \yii\base\InvalidConfigException
      */
     public function buildCondition($condition, &$params)
     {
@@ -529,9 +559,9 @@ class QueryBuilder extends \yii\db\QueryBuilder
 
     /**
      * {@inheritDoc}
-     * @throws NotSupportedException
+     * @throws NotSupportedException|\yii\base\InvalidConfigException
      */
-    protected function prepareInsertValues($table, $columns, $params = [])
+    protected function prepareInsertValues($table, $columns, $params = []): array
     {
         /** @var ActiveRecord $table */
         $mapping = $table::attributeMapping();
@@ -556,10 +586,14 @@ class QueryBuilder extends \yii\db\QueryBuilder
                     if (isset($val[$field]) && is_object($val[$field])) {
                         $val[$field]->{$tmp[0]} = $value;
                     } else {
-                        $val[$field] = Yii::createObject(ArrayHelper::merge(
-                            ['class' => $mapping[$name]['foreignModel']],
-                            [$tmp[0] => $value]
-                        ));
+                        if (isset($tmp[0])) {
+                            $val[$field] = Yii::createObject(ArrayHelper::merge(
+                                ['class' => $mapping[$name]['foreignModel']],
+                                [$tmp[0] => $value]
+                            ));
+                        } else {
+                            $val[$field] = $value;
+                        }
                     }
                 } else {
                     $val[$mapping[$name]['foreignField']] = $value;
@@ -576,7 +610,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
      * @param ActiveRecord $table
      * @throws \yii\base\InvalidConfigException
      */
-    protected function prepareUpdateSets($table, $columns, $params = [])
+    protected function prepareUpdateSets($table, $columns, $params = []): array
     {
         $this->_modelClass = $table;
         $mapping = $table::attributeMapping();
@@ -630,7 +664,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
      * @param boolean $isInsert
      * @param array $params
      * @return array|bool|float|int|ActiveRecord|string
-     * @throws NotSupportedException
+     * @throws NotSupportedException|\yii\base\InvalidConfigException
      */
     protected function castDataType(array $dataType, $value, bool $isInsert = true, array $params = [])
     {
@@ -672,10 +706,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
                 $value = (string)$value;
                 break;
             case 'DateTime':
-                if (!is_numeric($value)) {
-                    $value = strtotime($value);
-                }
-                $value = date('c', $value);
+                $value = Yii::$app->formatter->asDatetime($value, 'yyyy-MM-dd\'T\'HH:mm:ssxxx');
                 break;
             default:
                 if (!$isInsert) {
@@ -701,7 +732,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
     /**
      * {@inheritDoc}
      */
-    protected function defaultExpressionBuilders()
+    protected function defaultExpressionBuilders(): array
     {
         return [
             'yii\db\conditions\ConjunctionCondition' => 'simialbi\yii2\ews\conditions\ConjunctionConditionBuilder',

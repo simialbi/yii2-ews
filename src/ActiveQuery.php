@@ -9,6 +9,7 @@ namespace simialbi\yii2\ews;
 use DateTime;
 use DateTimeZone;
 use jamesiarmes\PhpEws\Request\BaseRequestType;
+use Yii;
 use yii\db\ActiveQueryInterface;
 use yii\db\ActiveQueryTrait;
 use yii\db\ActiveRelationTrait;
@@ -40,7 +41,7 @@ class ActiveQuery extends Query implements ActiveQueryInterface
      * @param string $modelClass the model class associated with this query
      * @param array $config configurations to be applied to the newly created query object
      */
-    public function __construct($modelClass, $config = [])
+    public function __construct($modelClass, array $config = [])
     {
         $this->modelClass = $modelClass;
         parent::__construct($config);
@@ -64,15 +65,16 @@ class ActiveQuery extends Query implements ActiveQueryInterface
      * If null, the ews connection returned by [[modelClass]] will be used.
      * @return array|ActiveRecord[]
      */
-    public function all($db = null)
+    public function all($db = null): array
     {
         return parent::all($db);
     }
 
     /**
      * {@inheritDoc}
+     * @throws \Exception
      */
-    public function populate($rows)
+    public function populate($rows): array
     {
         if (empty($rows)) {
             return [];
@@ -106,12 +108,13 @@ class ActiveQuery extends Query implements ActiveQueryInterface
      * @return ActiveRecord|array|null a single row of query result. Depending on the setting of [[asArray]],
      * the query result may be either an array or an ActiveRecord object. `null` will be returned
      * if the query results in nothing.
+     * @throws \Exception
      */
     public function one($db = null)
     {
         $row = parent::one($db);
         if ($row !== false) {
-            $models = $this->populate([$row]);
+            $models = $this->populate($row);
             return reset($models) ?: null;
         }
 
@@ -134,7 +137,7 @@ class ActiveQuery extends Query implements ActiveQueryInterface
         }
 
         if ($this->request === null) {
-            list($request, $params) = $db->getQueryBuilder()->build($this);
+            [$request, $params] = $db->getQueryBuilder()->build($this);
         } else {
             $request = $this->request;
             $params = $this->params;
@@ -149,7 +152,10 @@ class ActiveQuery extends Query implements ActiveQueryInterface
     /**
      * Map attributes in rows from EWS classes to AR classes
      *
+     * @param array||\jamesiarmes\PhpEws\ArrayType\ArrayOfRealItemsType $rows Rows to map
+     *
      * @return array
+     * @throws \Exception
      */
     protected function mapAttributes($rows): array
     {
@@ -195,9 +201,21 @@ class ActiveQuery extends Query implements ActiveQueryInterface
                             break;
                         default:
                             if (isset($attribute['foreignModel'])) {
-                                //todo
-                                continue 2;
+                                $modelClass = ($isArray = (substr($attribute['dataType'][0], -2) === '[]'))
+                                    ? substr($attribute['dataType'][0], -2)
+                                    : $attribute['dataType'][0];
+                                if (!class_exists("simialbi\\yii2\\ews\models\\$modelClass")) {
+                                    continue 2;
+                                }
+                                /** @var ActiveRecord $class */
+                                $class = Yii::createObject([
+                                    'class' => "simialbi\\yii2\\ews\models\\$modelClass"
+                                ]);
+                                $queryInstance = new self(get_class($class));
+                                $models = $queryInstance->populate([$value]);
+                                $value = $isArray ? $models : ArrayHelper::getValue($models, 0);
                             }
+                            break;
                     }
                 }
 
