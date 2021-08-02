@@ -536,6 +536,10 @@ class QueryBuilder extends \yii\db\QueryBuilder
                         return UnindexedFieldURIType::CALENDAR_IS_ONLINE_MEETING;
                     case 'status':
                         return UnindexedFieldURIType::CALENDAR_LEGACY_FREE_BUSY_STATUS;
+                    case 'updatedAt':
+                        return UnindexedFieldURIType::ITEM_LAST_MODIFIED_TIME;
+                    case 'createdAt':
+                        return UnindexedFieldURIType::ITEM_DATE_TIME_CREATED;
                 }
                 break;
             case Folder::class:

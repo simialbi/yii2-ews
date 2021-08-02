@@ -41,6 +41,16 @@ class ActiveRecordTest extends TestCase
                 'foreignModel' => '\jamesiarmes\PhpEws\Type\FolderIdType',
                 'foreignField' => 'ParentFolderId.ChangeKey'
             ],
+            'start' => [
+                'dataType' => ['string', '\DateTime', 'integer'],
+                'foreignModel' => null,
+                'foreignField' => 'Start'
+            ],
+            'end' => [
+                'dataType' => ['string', '\DateTime', 'integer'],
+                'foreignModel' => null,
+                'foreignField' => 'End'
+            ],
             'subject' => [
                 'dataType' => ['string'],
                 'foreignModel' => null,
@@ -90,7 +100,17 @@ class ActiveRecordTest extends TestCase
                 'dataType' => ['string'],
                 'foreignModel' => null,
                 'foreignField' => 'LegacyFreeBusyStatus'
-            ]
+            ],
+            'createdAt' => [
+                'dataType' => ['string', '\DateTime', 'integer'],
+                'foreignModel' => null,
+                'foreignField' => 'DateTimeCreated'
+            ],
+            'updatedAt' => [
+                'dataType' => ['string', '\DateTime', 'integer'],
+                'foreignModel' => null,
+                'foreignField' => 'LastModifiedTime'
+            ],
         ], $attributeMapping);
     }
 

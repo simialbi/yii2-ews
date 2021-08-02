@@ -11,6 +11,8 @@ use jamesiarmes\PhpEws\Enumeration\CalendarItemTypeType;
 use jamesiarmes\PhpEws\Enumeration\LegacyFreeBusyType;
 use jamesiarmes\PhpEws\Type\CalendarItemType;
 use simialbi\yii2\ews\ActiveRecord;
+use Yii;
+use yii\behaviors\AttributeTypecastBehavior;
 
 /**
  * Class CalendarEvent
@@ -32,6 +34,8 @@ use simialbi\yii2\ews\ActiveRecord;
  * @property boolean $isCancelled => IsCancelled
  * @property boolean $isOnline => IsOnlineMeeting
  * @property string $status => LegacyFreeBusyStatus
+ * @property string|\DateTime|integer $createdAt => DateTimeCreated
+ * @property string|\DateTime|integer $updatedAt => LastModifiedTime
  *
  * @property Contact $organizer => \jamesiarmes\PhpEws\Type\SingleRecipientType:Organizer
  * @property Attendee[] $requiredAttendees => \jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfAttendeesType:RequiredAttendees.Attendee
@@ -84,5 +88,39 @@ class CalendarEvent extends ActiveRecord
             ['status', 'default', 'value' => LegacyFreeBusyType::BUSY],
             ['format', 'default', 'value' => BodyTypeType::HTML]
         ];
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function behaviors(): array
+    {
+        return [
+            'typecast' => [
+                'class' => AttributeTypecastBehavior::class,
+                'typecastAfterSave' => false,
+                'typecastAfterValidate' => false,
+                'typecastBeforeSave' => false,
+                'typecastAfterFind' => true,
+                'attributeTypes' => [
+                    'start' => [$this, 'typeCastDateTime'],
+                    'end' => [$this, 'typeCastDateTime'],
+                    'createdAt' => [$this, 'typeCastDateTime'],
+                    'updatedAt' => [$this, 'typeCastDateTime']
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Typecast a date from exchange format
+     *
+     * @param string|null $value The date time string
+     * @return string|null The formatted date time string
+     * @throws \yii\base\InvalidConfigException
+     */
+    public function typeCastDateTime(?string $value): ?string
+    {
+        return ($value === null) ? null : Yii::$app->formatter->asDatetime($value, 'yyyy-MM-dd HH:mm xxx');
     }
 }
