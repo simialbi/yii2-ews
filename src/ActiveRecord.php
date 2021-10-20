@@ -199,4 +199,16 @@ class ActiveRecord extends BaseActiveRecord
 
         return true;
     }
+
+    /**
+     * Typecast a date from exchange format
+     *
+     * @param string|null $value The date time string
+     * @return string|null The formatted date time string
+     * @throws \yii\base\InvalidConfigException
+     */
+    public function typeCastDateTime(?string $value): ?string
+    {
+        return ($value === null) ? null : Yii::$app->formatter->asDatetime($value, 'yyyy-MM-dd HH:mm xxx');
+    }
 }

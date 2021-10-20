@@ -15,7 +15,7 @@ use simialbi\yii2\ews\models\Attendee;
 use simialbi\yii2\ews\models\CalendarEvent;
 use Yii;
 
-class ActiveRecordTest extends TestCase
+class CalendarEventTest extends TestCase
 {
     public function testAttributeMapping()
     {

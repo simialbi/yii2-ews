@@ -57,7 +57,7 @@ class CalendarEvent extends ActiveRecord
     public function rules(): array
     {
         return [
-            [['id', 'changeKey', 'subject', 'body', 'location'], 'string'],
+            [['id', 'changeKey', 'parentFolderId', 'parentFolderChangeKey', 'subject', 'body', 'location'], 'string'],
             ['start', 'datetime', 'format' => 'yyyy-MM-dd HH:mm xxx', 'timestampAttribute' => 'start'],
             ['end', 'datetime', 'format' => 'yyyy-MM-dd HH:mm xxx', 'timestampAttribute' => 'end'],
             [['isRecurring', 'isAllDay', 'isCancelled', 'isOnline'], 'boolean'],
@@ -110,17 +110,5 @@ class CalendarEvent extends ActiveRecord
                 ]
             ]
         ];
-    }
-
-    /**
-     * Typecast a date from exchange format
-     *
-     * @param string|null $value The date time string
-     * @return string|null The formatted date time string
-     * @throws \yii\base\InvalidConfigException
-     */
-    public function typeCastDateTime(?string $value): ?string
-    {
-        return ($value === null) ? null : Yii::$app->formatter->asDatetime($value, 'yyyy-MM-dd HH:mm xxx');
     }
 }
