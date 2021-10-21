@@ -77,9 +77,7 @@ class ActiveRecord extends BaseActiveRecord
     /**
      * {@inheritDoc}
      * @return boolean
-     * @throws \yii\base\NotSupportedException
-     * @throws Exception
-     * @throws InvalidConfigException
+     * @throws \yii\base\NotSupportedException|Exception|InvalidConfigException
      */
     public static function updateAll($attributes, $condition = null): bool
     {
@@ -92,12 +90,15 @@ class ActiveRecord extends BaseActiveRecord
     /**
      * {@inheritDoc}
      *
-     * @return int|void
-     * @throws \yii\base\NotSupportedException
+     * @return boolean
+     * @throws Exception|InvalidConfigException
      */
-    public static function deleteAll($condition = null)
+    public static function deleteAll($condition = null): bool
     {
-        parent::deleteAll($condition);
+        $command = static::getDb()->createCommand();
+        $command->delete(static::class, $condition);
+
+        return $command->execute() !== false;
     }
 
     /**

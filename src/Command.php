@@ -141,6 +141,26 @@ class Command extends Component
     }
 
     /**
+     * Creates a DELETE SQL statement.
+     *
+     * The method will properly escape the column names.
+     *
+     * Note that the created command is not executed until [[execute()]] is called.
+     *
+     * @param string $model the model instance to create insert statement for
+     * @param array $condition the condition. Normally the [[changeKey]] and [[id]].
+     * @return $this
+     * @throws \yii\base\InvalidConfigException
+     */
+    public function delete(string $model, $condition = ''): Command
+    {
+        $params = [];
+        $request = $this->db->getQueryBuilder()->delete($model, $condition, $params);
+
+        return $this->setRequest($request);
+    }
+
+    /**
      * Executes the statement and returns ALL rows at once.
      * @param int|null $fetchMode for compatibility with [[\yii\db\Command]]
      * @return array|\jamesiarmes\PhpEws\ArrayType\ArrayOfRealItemsType all rows of the query result. Each array element
@@ -209,10 +229,17 @@ class Command extends Component
                 ]);
             }
 
-            foreach ($message->Items as $item) {
-                /** @var \jamesiarmes\PhpEws\Type\ItemType[] $item */
-                $return = $item[0]->ItemId;
-                break;
+            switch ($method) {
+                case 'CreateItem':
+                case 'UpdateItem':
+                    foreach ($message->Items as $item) {
+                        /** @var \jamesiarmes\PhpEws\Type\ItemType[] $item */
+                        $return = $item[0]->ItemId;
+                        break;
+                    }
+                    break;
+                case 'DeleteItem':
+                    return true;
             }
         } catch (Exception $e) {
             throw $e;

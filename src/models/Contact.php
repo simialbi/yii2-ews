@@ -25,23 +25,6 @@ use yii\helpers\ArrayHelper;
 class Contact extends ActiveRecord
 {
     /**
-     * @var string
-     */
-    public $email;
-    /**
-     * @var string
-     */
-    public $changeKey;
-    /**
-     * @var string
-     */
-    public $id;
-    /**
-     * @var string
-     */
-    public $name;
-
-    /**
      * {@inheritDoc}
      */
     public static function modelName(): string
@@ -70,7 +53,7 @@ class Contact extends ActiveRecord
     /**
      * {@inheritDoc}
      */
-    public function rules()
+    public function rules(): array
     {
         return [
             [['name', 'changeKey', 'id'], 'string'],

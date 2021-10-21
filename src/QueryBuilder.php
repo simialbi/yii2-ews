@@ -15,6 +15,7 @@ use jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfItemChangeDescriptionsType;
 use jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfItemChangesType;
 use jamesiarmes\PhpEws\Enumeration\CalendarItemCreateOrDeleteOperationType;
 use jamesiarmes\PhpEws\Enumeration\DefaultShapeNamesType;
+use jamesiarmes\PhpEws\Enumeration\DisposalType;
 use jamesiarmes\PhpEws\Enumeration\DistinguishedFolderIdNameType;
 use jamesiarmes\PhpEws\Enumeration\MessageDispositionType;
 use jamesiarmes\PhpEws\Enumeration\SortDirectionType;
@@ -22,6 +23,7 @@ use jamesiarmes\PhpEws\Enumeration\UnindexedFieldURIType;
 use jamesiarmes\PhpEws\Request\BaseRequestType;
 use jamesiarmes\PhpEws\Request\CreateFolderType;
 use jamesiarmes\PhpEws\Request\CreateItemType;
+use jamesiarmes\PhpEws\Request\DeleteItemType;
 use jamesiarmes\PhpEws\Request\FindFolderType;
 use jamesiarmes\PhpEws\Request\FindItemType;
 use jamesiarmes\PhpEws\Request\GetItemType;
@@ -366,6 +368,39 @@ class QueryBuilder extends \yii\db\QueryBuilder
                             'class' => NonEmptyArrayOfItemChangeDescriptionsType::class,
                             'SetItemField' => $changes
                         ])
+                    ])
+                ]
+            ])
+        ];
+
+        return Yii::createObject($config);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @param string $table active record class name
+     *
+     * @return BaseRequestType|object|false
+     * @throws \yii\base\InvalidConfigException
+     */
+    public function delete($table, $condition, &$params)
+    {
+        if (!isset($condition['id']) || !isset($condition['changeKey'])) {
+            // TODO warning
+            return false;
+        }
+
+        $config = [
+            'class' => DeleteItemType::class,
+            'DeleteType' => DisposalType::MOVE_TO_DELETED_ITEMS,
+            'ItemIds' => Yii::createObject([
+                'class' => NonEmptyArrayOfBaseItemIdsType::class,
+                'ItemId' => [
+                    Yii::createObject([
+                        'class' => ItemIdType::class,
+                        'Id' => $condition['id'],
+                        'ChangeKey' => $condition['changeKey']
                     ])
                 ]
             ])
