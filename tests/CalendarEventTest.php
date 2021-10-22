@@ -7,6 +7,7 @@
 namespace yiiunit\extensions\ews;
 
 use jamesiarmes\PhpEws\Enumeration\DefaultShapeNamesType;
+use jamesiarmes\PhpEws\Enumeration\DisposalType;
 use jamesiarmes\PhpEws\Enumeration\DistinguishedFolderIdNameType;
 use jamesiarmes\PhpEws\Enumeration\LegacyFreeBusyType;
 use jamesiarmes\PhpEws\Enumeration\SortDirectionType;
@@ -270,5 +271,23 @@ class CalendarEventTest extends TestCase
         $this->assertEquals(date('c', strtotime($endDate)), $updates->SetItemField[3]->CalendarItem->End);
         $this->assertEquals(UnindexedFieldURIType::CALENDAR_LEGACY_FREE_BUSY_STATUS, $updates->SetItemField[4]->FieldURI->FieldURI);
         $this->assertEquals(LegacyFreeBusyType::BUSY, $updates->SetItemField[4]->CalendarItem->LegacyFreeBusyStatus);
+    }
+
+    public function testQueryBuilderDelete()
+    {
+        $event = new CalendarEvent();
+        $params = [];
+        $request = $event::getDb()->getQueryBuilder()->delete(get_class($event), [
+            'id' => 'AAajslgkha32394isdg==',
+            'changeKey' => '7007ACC7-3202-11D1-AAD2-00805FC1270E'
+        ], $params);
+
+        $this->assertInstanceOf('jamesiarmes\PhpEws\Request\DeleteItemType', $request);
+        $this->assertEquals(DisposalType::MOVE_TO_DELETED_ITEMS, $request->DeleteType);
+        $this->assertInstanceOf('jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfBaseItemIdsType', $request->ItemIds);
+        $this->assertIsArray($request->ItemIds->ItemId);
+        $this->assertInstanceOf('jamesiarmes\PhpEws\Type\ItemIdType', $request->ItemIds->ItemId[0]);
+        $this->assertEquals('7007ACC7-3202-11D1-AAD2-00805FC1270E', $request->ItemIds->ItemId[0]->ChangeKey);
+        $this->assertEquals('AAajslgkha32394isdg==', $request->ItemIds->ItemId[0]->Id);
     }
 }
