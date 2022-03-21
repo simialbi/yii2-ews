@@ -23,6 +23,7 @@
     "minimum-stability": "beta",
     "require": {
         "php": ">=7.1",
+        "ext-soap": "*",
         "yiisoft/yii2": "^2.0.20",
         "php-ews/php-ews": "^1.0.0",
         "simialbi/yii2-simialbi-base": ">=0.10.2 <1.0 | ^1.0.0"
