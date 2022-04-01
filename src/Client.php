@@ -8,6 +8,7 @@ namespace simialbi\yii2\ews;
 
 use jamesiarmes\PhpEws\ClassMap;
 use jamesiarmes\PhpNtlm\SoapClient;
+use Yii;
 
 class Client extends \jamesiarmes\PhpEws\Client
 {
@@ -36,11 +37,11 @@ class Client extends \jamesiarmes\PhpEws\Client
     protected function initializeSoapClient(): SoapClient
     {
         $this->soap = new SoapClient(
-            dirname(__FILE__) . '/assets/services.wsdl',
+            Yii::getAlias('@vendor/php-ews/php-ews/src/assets/services.wsdl'),
             [
                 'user' => $this->username,
                 'password' => $this->password,
-                'location' => !empty($this->location) ? $this->location : 'https://' . $this->server . '/EWS/Exchange.asmx',
+                'location' => $this->location ?? 'https://' . $this->server . '/EWS/Exchange.asmx',
                 'classmap' => ClassMap::getMap(),
                 'curlopts' => $this->curl_options,
                 'features' => SOAP_SINGLE_ELEMENT_ARRAYS,
