@@ -21,7 +21,7 @@ class CalendarEventTest extends TestCase
     public function testAttributeMapping()
     {
         $attributeMapping = CalendarEvent::attributeMapping();
-        $this->assertArraySubset([
+        $expectedSubset = [
             'id' => [
                 'dataType' => ['string'],
                 'foreignModel' => '\jamesiarmes\PhpEws\Type\ItemIdType',
@@ -57,15 +57,15 @@ class CalendarEventTest extends TestCase
                 'foreignModel' => null,
                 'foreignField' => 'Subject'
             ],
-            'format' => [
-                'dataType' => ['string'],
-                'foreignModel' => '\jamesiarmes\PhpEws\Type\BodyType',
-                'foreignField' => 'Body.BodyType'
-            ],
             'body' => [
                 'dataType' => ['string'],
                 'foreignModel' => '\jamesiarmes\PhpEws\Type\BodyType',
                 'foreignField' => 'Body._'
+            ],
+            'format' => [
+                'dataType' => ['string'],
+                'foreignModel' => '\jamesiarmes\PhpEws\Type\BodyType',
+                'foreignField' => 'Body.BodyType'
             ],
             'location' => [
                 'dataType' => ['string'],
@@ -112,7 +112,11 @@ class CalendarEventTest extends TestCase
                 'foreignModel' => null,
                 'foreignField' => 'LastModifiedTime'
             ],
-        ], $attributeMapping);
+        ];
+        foreach ($expectedSubset as $key => $value) {
+            $this->assertArrayHasKey($key, $attributeMapping);
+            $this->assertSame($value, $attributeMapping[$key]);
+        }
     }
 
     public function testQueryBuilderFind()

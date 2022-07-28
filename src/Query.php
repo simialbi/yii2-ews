@@ -22,12 +22,12 @@ class Query extends \yii\db\Query implements QueryInterface
      * @return Command the created ews command instance.
      * @throws \yii\base\InvalidConfigException
      */
-    public function createCommand($db = null)
+    public function createCommand($db = null): Command
     {
         if ($db === null) {
             $db = Yii::$app->get('ews');
         }
-        list($request, $params) = $db->getQueryBuilder()->build($this);
+        [$request, $params] = $db->getQueryBuilder()->build($this);
 
         $command = $db->createCommand($request, $params);
         $this->setCommandCache($command);
@@ -50,7 +50,7 @@ class Query extends \yii\db\Query implements QueryInterface
      * @param static $from the source query object
      * @return static the new Query object
      */
-    public static function create($from)
+    public static function create($from): Query
     {
         return new Query([
             'where' => $from->where,

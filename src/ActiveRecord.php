@@ -124,7 +124,7 @@ class ActiveRecord extends BaseActiveRecord
                 $attributeFields[] = $matches[3];
                 $attributeMeta[$matches[3]] = [
                     'dataType' => explode('|', $matches[2]),
-                    'foreignModel' => ArrayHelper::getValue($matches, 4),
+                    'foreignModel' => empty(ArrayHelper::getValue($matches, 4)) ? null : ArrayHelper::getValue($matches, 4),
                     'foreignField' => ArrayHelper::getValue($matches, 5)
                 ];
             }

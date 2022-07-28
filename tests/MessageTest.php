@@ -13,7 +13,7 @@ class MessageTest extends TestCase
     public function testAttributeMapping()
     {
         $attributeMapping = Message::attributeMapping();
-        $this->assertArraySubset([
+        $expectedSubset = [
             'id' => [
                 'dataType' => ['string'],
                 'foreignModel' => '\jamesiarmes\PhpEws\Type\ItemIdType',
@@ -79,6 +79,10 @@ class MessageTest extends TestCase
                 'foreignModel' => null,
                 'foreignField' => 'LastModifiedTime'
             ],
-        ], $attributeMapping);
+        ];
+        foreach ($expectedSubset as $key => $value) {
+            $this->assertArrayHasKey($key, $attributeMapping);
+            $this->assertSame($value, $attributeMapping[$key]);
+        }
     }
 }

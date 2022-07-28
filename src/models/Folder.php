@@ -35,7 +35,7 @@ class Folder extends ActiveRecord
     /**
      * {@inheritDoc}
      */
-    public function rules()
+    public function rules(): array
     {
         return [
             [['id', 'changeKey', 'name'], 'string'],

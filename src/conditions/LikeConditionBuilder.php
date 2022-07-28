@@ -26,7 +26,7 @@ class LikeConditionBuilder extends \yii\db\conditions\LikeConditionBuilder
      * {@inheritDoc}
      * @return object
      */
-    public function build(ExpressionInterface $expression, array &$params = [])
+    public function build(ExpressionInterface $expression, array &$params = []): object
     {
         /** @var \yii\db\conditions\LikeCondition $expression */
         return Yii::createObject([

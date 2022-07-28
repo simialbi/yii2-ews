@@ -125,7 +125,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
                 ])
             ];
         } else {
-            if (!isset($params['folderId']) || empty($params['folderId'])) {
+            if (empty($params['folderId'])) {
                 $params['folderId'] = DistinguishedFolderIdNameType::INBOX;
                 if ($query instanceof ActiveQuery) {
                     /** @var ActiveQuery $query */

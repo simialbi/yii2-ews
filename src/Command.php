@@ -78,13 +78,13 @@ class Command extends Component
 
     /**
      * Enables query cache for this command.
-     * @param int $duration the number of seconds that query result of this command can remain valid in the cache.
+     * @param int|null $duration the number of seconds that query result of this command can remain valid in the cache.
      * If this is not set, the value of [[Connection::queryCacheDuration]] will be used instead.
      * Use 0 to indicate that the cached data will never expire.
-     * @param \yii\caching\Dependency $dependency the cache dependency associated with the cached query result.
+     * @param \yii\caching\Dependency|null $dependency the cache dependency associated with the cached query result.
      * @return $this the command object itself
      */
-    public function cache($duration = null, $dependency = null): Command
+    public function cache(?int $duration = null, ?\yii\caching\Dependency $dependency = null): Command
     {
         $this->queryCacheDuration = $duration === null ? $this->db->queryCacheDuration : $duration;
         $this->queryCacheDependency = $dependency;
@@ -110,6 +110,8 @@ class Command extends Component
      * They should be bound to the DB command later.
      *
      * @return $this the command object itself
+     * @throws \yii\base\InvalidConfigException
+     * @throws \yii\base\NotSupportedException
      */
     public function insert(string $model, array $columns, array $params = []): Command
     {
@@ -176,13 +178,13 @@ class Command extends Component
     /**
      * Executes the SQL statement and returns the first row of the result.
      * This method is best used when only the first row of result is needed for a query.
-     * @param int $fetchMode the result fetch mode. Please refer to [PHP manual](https://secure.php.net/manual/en/pdostatement.setfetchmode.php)
+     * @param int|null $fetchMode the result fetch mode. Please refer to [PHP manual](https://secure.php.net/manual/en/pdostatement.setfetchmode.php)
      * for valid fetch modes. If this parameter is null, the value set in [[fetchMode]] will be used.
      * @return array|false the first row (in terms of an array) of the query result. False is returned if the query
      * results in nothing.
      * @throws Exception execution failed
      */
-    public function queryOne($fetchMode = null)
+    public function queryOne(?int $fetchMode = null)
     {
         return $this->queryInternal();
     }
