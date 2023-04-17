@@ -234,10 +234,14 @@ class Command extends Component
             switch ($method) {
                 case 'CreateItem':
                 case 'UpdateItem':
-                    foreach ($message->Items as $item) {
-                        /** @var \jamesiarmes\PhpEws\Type\ItemType[] $item */
-                        $return = $item[0]->ItemId;
-                        break;
+                    if (isset($message->Items->Message)) {
+                        $return = $message->Items->Message[0]->ItemId;
+                    } else {
+                        foreach ($message->Items as $item) {
+                            /** @var \jamesiarmes\PhpEws\Type\ItemType[] $item */
+                            $return = $item[0]->ItemId;
+                            break;
+                        }
                     }
                     break;
                 case 'DeleteItem':

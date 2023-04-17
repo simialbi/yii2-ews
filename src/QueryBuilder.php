@@ -50,6 +50,7 @@ use jamesiarmes\PhpEws\Type\TaskType;
 use simialbi\yii2\ews\models\CalendarEvent;
 use simialbi\yii2\ews\models\Contact;
 use simialbi\yii2\ews\models\Folder;
+use simialbi\yii2\ews\models\Message;
 use Yii;
 use yii\base\NotSupportedException;
 use yii\db\ExpressionInterface;
@@ -337,8 +338,6 @@ class QueryBuilder extends \yii\db\QueryBuilder
     public function update($table, $columns, $condition, &$params)
     {
         /** @var ActiveRecord $table */
-//        $changes = [];
-
         if (!isset($condition['id']) || !isset($condition['changeKey'])) {
             // TODO warning
             return false;
@@ -372,6 +371,10 @@ class QueryBuilder extends \yii\db\QueryBuilder
                 ]
             ])
         ];
+
+        if ($table::modelName() === MessageType::class) {
+            $config['MessageDisposition'] = MessageDispositionType::SAVE_ONLY;
+        }
 
         return Yii::createObject($config);
     }
@@ -571,10 +574,36 @@ class QueryBuilder extends \yii\db\QueryBuilder
                         return UnindexedFieldURIType::CALENDAR_IS_ONLINE_MEETING;
                     case 'status':
                         return UnindexedFieldURIType::CALENDAR_LEGACY_FREE_BUSY_STATUS;
-                    case 'updatedAt':
-                        return UnindexedFieldURIType::ITEM_LAST_MODIFIED_TIME;
-                    case 'createdAt':
-                        return UnindexedFieldURIType::ITEM_DATE_TIME_CREATED;
+//                    case 'updatedAt':
+//                        return UnindexedFieldURIType::ITEM_LAST_MODIFIED_TIME;
+//                    case 'createdAt':
+//                        return UnindexedFieldURIType::ITEM_DATE_TIME_CREATED;
+                }
+                break;
+            case Message::class:
+                switch ($property) {
+                    case 'id':
+                        return UnindexedFieldURIType::ITEM_ID;
+                    case 'parentFolderId':
+                        return UnindexedFieldURIType::ITEM_PARENT_FOLDER_ID;
+                    case 'sensitivity':
+                        return UnindexedFieldURIType::ITEM_SENSITIVITY;
+                    case 'importance':
+                        return UnindexedFieldURIType::ITEM_IMPORTANCE;
+                    case 'subject':
+                        return UnindexedFieldURIType::ITEM_SUBJECT;
+                    case 'body':
+                        return UnindexedFieldURIType::ITEM_BODY;
+                    case 'messageId':
+                        return UnindexedFieldURIType::MESSAGE_INTERNET_MESSAGE_ID;
+                    case 'isRead':
+                        return UnindexedFieldURIType::MESSAGE_IS_READ;
+//                    case 'sentAt':
+//                        return UnindexedFieldURIType::ITEM_DATE_TIME_SENT;
+//                    case 'createdAt':
+//                        return UnindexedFieldURIType::ITEM_DATE_TIME_CREATED;
+//                    case 'updatedAt':
+//                        return UnindexedFieldURIType::ITEM_LAST_MODIFIED_TIME;
                 }
                 break;
             case Folder::class:
