@@ -279,7 +279,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
      * @param string $table active record class name
      *
      * @return BaseRequestType|object
-     * @throws NotSupportedException|\yii\base\InvalidConfigException
+     * @throws NotSupportedException|\yii\base\InvalidConfigException|\ReflectionException
      */
     public function insert($table, $columns, &$params)
     {
@@ -333,7 +333,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
      * @param string $table active record class name
      *
      * @return BaseRequestType|object|false
-     * @throws NotSupportedException|\yii\base\InvalidConfigException
+     * @throws NotSupportedException|\yii\base\InvalidConfigException|\ReflectionException
      */
     public function update($table, $columns, $condition, &$params)
     {
@@ -627,7 +627,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
 
     /**
      * {@inheritDoc}
-     * @throws NotSupportedException|\yii\base\InvalidConfigException
+     * @throws NotSupportedException|\yii\base\InvalidConfigException|\ReflectionException
      */
     protected function prepareInsertValues($table, $columns, $params = []): array
     {
@@ -676,7 +676,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
     /**
      * {@inheritDoc}
      * @param ActiveRecord $table
-     * @throws \yii\base\InvalidConfigException
+     * @throws \yii\base\InvalidConfigException|\ReflectionException
      */
     protected function prepareUpdateSets($table, $columns, $params = []): array
     {
@@ -732,7 +732,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
      * @param boolean $isInsert
      * @param array $params
      * @return array|bool|float|int|ActiveRecord|string
-     * @throws NotSupportedException|\yii\base\InvalidConfigException
+     * @throws NotSupportedException|\yii\base\InvalidConfigException|\ReflectionException
      */
     protected function castDataType(array $dataType, $value, bool $isInsert = true, array $params = [])
     {
