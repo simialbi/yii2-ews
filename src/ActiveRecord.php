@@ -118,11 +118,12 @@ class ActiveRecord extends BaseActiveRecord
             $matches = [];
             $docLine = ltrim($docLine, "\t* ");
             if (preg_match($regex, $docLine, $matches) && isset($matches[3])) {
-                if ($matches[1] === 'read' || empty($matches[2])) {
+                if (empty($matches[2])) {
                     continue;
                 }
                 $attributeFields[] = $matches[3];
                 $attributeMeta[$matches[3]] = [
+                    'readOnly' => $matches[1] === 'read',
                     'dataType' => explode('|', $matches[2]),
                     'foreignModel' => empty(ArrayHelper::getValue($matches, 4)) ? null : ArrayHelper::getValue($matches, 4),
                     'foreignField' => ArrayHelper::getValue($matches, 5)

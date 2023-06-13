@@ -642,7 +642,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
                 'class' => $table::modelName()
             ];
             foreach ($columns as $name => $value) {
-                if (!isset($mapping[$name]) || !isset($mapping[$name]['foreignField'])) {
+                if (!isset($mapping[$name]) || !isset($mapping[$name]['foreignField']) || $mapping[$name]['readOnly']) {
                     continue;
                 }
 
@@ -685,7 +685,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
         $property = substr(StringHelper::basename($table::modelName()), 0, -4);
         $changes = [];
         foreach ($columns as $name => $value) {
-            if (!isset($mapping[$name]) || !isset($mapping[$name]['foreignField'])) {
+            if (!isset($mapping[$name]) || !isset($mapping[$name]['foreignField']) || $mapping[$name]['readOnly']) {
                 continue;
             }
             if (null === ($uri = $this->getUriFromProperty($name))) {
