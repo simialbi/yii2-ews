@@ -574,10 +574,10 @@ class QueryBuilder extends \yii\db\QueryBuilder
                         return UnindexedFieldURIType::CALENDAR_IS_ONLINE_MEETING;
                     case 'status':
                         return UnindexedFieldURIType::CALENDAR_LEGACY_FREE_BUSY_STATUS;
-//                    case 'updatedAt':
-//                        return UnindexedFieldURIType::ITEM_LAST_MODIFIED_TIME;
-//                    case 'createdAt':
-//                        return UnindexedFieldURIType::ITEM_DATE_TIME_CREATED;
+                    case 'updatedAt':
+                        return UnindexedFieldURIType::ITEM_LAST_MODIFIED_TIME;
+                    case 'createdAt':
+                        return UnindexedFieldURIType::ITEM_DATE_TIME_CREATED;
                 }
                 break;
             case Message::class:
@@ -598,12 +598,12 @@ class QueryBuilder extends \yii\db\QueryBuilder
                         return UnindexedFieldURIType::MESSAGE_INTERNET_MESSAGE_ID;
                     case 'isRead':
                         return UnindexedFieldURIType::MESSAGE_IS_READ;
-//                    case 'sentAt':
-//                        return UnindexedFieldURIType::ITEM_DATE_TIME_SENT;
-//                    case 'createdAt':
-//                        return UnindexedFieldURIType::ITEM_DATE_TIME_CREATED;
-//                    case 'updatedAt':
-//                        return UnindexedFieldURIType::ITEM_LAST_MODIFIED_TIME;
+                    case 'sentAt':
+                        return UnindexedFieldURIType::ITEM_DATE_TIME_SENT;
+                    case 'createdAt':
+                        return UnindexedFieldURIType::ITEM_DATE_TIME_CREATED;
+                    case 'updatedAt':
+                        return UnindexedFieldURIType::ITEM_LAST_MODIFIED_TIME;
                 }
                 break;
             case Folder::class:

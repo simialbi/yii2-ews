@@ -34,8 +34,8 @@ use yii\behaviors\AttributeTypecastBehavior;
  * @property boolean $isCancelled => IsCancelled
  * @property boolean $isOnline => IsOnlineMeeting
  * @property string $status => LegacyFreeBusyStatus
- * @property string|\DateTime|integer $createdAt => DateTimeCreated
- * @property string|\DateTime|integer $updatedAt => LastModifiedTime
+ * @property-read string|\DateTime|integer $createdAt => DateTimeCreated
+ * @property-read string|\DateTime|integer $updatedAt => LastModifiedTime
  *
  * @property Contact $organizer => \jamesiarmes\PhpEws\Type\SingleRecipientType:Organizer
  * @property Attendee[] $requiredAttendees => \jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfAttendeesType:RequiredAttendees.Attendee

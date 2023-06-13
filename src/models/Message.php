@@ -28,9 +28,9 @@ use yii\behaviors\AttributeTypecastBehavior;
  * @property string $format => \jamesiarmes\PhpEws\Type\BodyType:Body.BodyType
  * @property string $messageId => InternetMessageId
  * @property boolean $isRead => IsRead
- * @property string|\DateTime|integer $sentAt => DateTimeSent
- * @property string|\DateTime|integer $createdAt => DateTimeCreated
- * @property string|\DateTime|integer $updatedAt => LastModifiedTime
+ * @property-read string|\DateTime|integer $sentAt => DateTimeSent
+ * @property-read string|\DateTime|integer $createdAt => DateTimeCreated
+ * @property-read string|\DateTime|integer $updatedAt => LastModifiedTime
  *
  * @property Contact $from => \jamesiarmes\PhpEws\Type\SingleRecipientType:From
  * @property Contact $sender => \jamesiarmes\PhpEws\Type\SingleRecipientType:Sender
