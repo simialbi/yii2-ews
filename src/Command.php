@@ -8,7 +8,6 @@ namespace simialbi\yii2\ews;
 
 use jamesiarmes\PhpEws\Enumeration\ResponseCodeType;
 use jamesiarmes\PhpEws\Request\BaseRequestType;
-use phpDocumentor\Reflection\Types\False_;
 use Yii;
 use yii\base\Component;
 use yii\helpers\ArrayHelper;
@@ -24,30 +23,30 @@ class Command extends Component
     /**
      * @var Connection
      */
-    public $db;
+    public Connection $db;
 
     /**
      * @var array the parameters (name => value) that are injected to the request.
      */
-    public $params = [];
+    public array $params = [];
 
     /**
-     * @var \yii\caching\Dependency the dependency to be associated with the cached query result for this command
+     * @var \yii\caching\Dependency|null the dependency to be associated with the cached query result for this command
      * @see cache()
      */
-    public $queryCacheDependency;
+    public ?\yii\caching\Dependency $queryCacheDependency = null;
     /**
-     * @var int the default number of seconds that query results can remain valid in cache.
+     * @var int|null the default number of seconds that query results can remain valid in cache.
      * Use 0 to indicate that the cached data will never expire. And use a negative number to indicate
      * query cache should not be used.
      * @see cache()
      */
-    public $queryCacheDuration;
+    public ?int $queryCacheDuration = null;
 
     /**
-     * @var BaseRequestType
+     * @var BaseRequestType|null
      */
-    private $_request;
+    private ?BaseRequestType $_request;
 
     /**
      * Returns the raw SQL by inserting parameter values into the corresponding placeholders in [[sql]].
@@ -66,10 +65,10 @@ class Command extends Component
      * @param BaseRequestType|null $request
      * @return $this
      */
-    public function setRequest(?BaseRequestType $request): Command
+    public function setRequest(?BaseRequestType $request): self
     {
-        if ($request !== $this->_request) {
-            $this->params = [];
+        $this->params = [];
+        if (!isset($this->_request) || $request !== $this->_request) {
             $this->_request = $request;
         }
 
@@ -84,9 +83,9 @@ class Command extends Component
      * @param \yii\caching\Dependency|null $dependency the cache dependency associated with the cached query result.
      * @return $this the command object itself
      */
-    public function cache(?int $duration = null, ?\yii\caching\Dependency $dependency = null): Command
+    public function cache(?int $duration = null, ?\yii\caching\Dependency $dependency = null): self
     {
-        $this->queryCacheDuration = $duration === null ? $this->db->queryCacheDuration : $duration;
+        $this->queryCacheDuration = $duration ?? $this->db->queryCacheDuration;
         $this->queryCacheDependency = $dependency;
         return $this;
     }
@@ -95,7 +94,7 @@ class Command extends Component
      * Disables query cache for this command.
      * @return $this the command object itself
      */
-    public function noCache(): Command
+    public function noCache(): self
     {
         $this->queryCacheDuration = -1;
         return $this;
@@ -110,10 +109,9 @@ class Command extends Component
      * They should be bound to the DB command later.
      *
      * @return $this the command object itself
-     * @throws \yii\base\InvalidConfigException
-     * @throws \yii\base\NotSupportedException
+     * @throws \yii\base\InvalidConfigException|\yii\base\NotSupportedException|\ReflectionException
      */
-    public function insert(string $model, array $columns, array $params = []): Command
+    public function insert(string $model, array $columns, array $params = []): self
     {
         $request = $this->db->getQueryBuilder()->insert($model, $columns, $params);
 
@@ -131,10 +129,9 @@ class Command extends Component
      * @param array $columns the column data (name => value) to be updated.
      * @param array $condition the condition. Normally the [[changeKey]] and [[id]].
      * @return $this the command object itself
-     * @throws \yii\base\InvalidConfigException
-     * @throws \yii\base\NotSupportedException
+     * @throws \yii\base\InvalidConfigException|\yii\base\NotSupportedException|\ReflectionException
      */
-    public function update(string $model, array $columns, array $condition): Command
+    public function update(string $model, array $columns, array $condition): self
     {
         $params = [];
         $request = $this->db->getQueryBuilder()->update($model, $columns, $condition, $params);
@@ -150,11 +147,11 @@ class Command extends Component
      * Note that the created command is not executed until [[execute()]] is called.
      *
      * @param string $model the model instance to create insert statement for
-     * @param array $condition the condition. Normally the [[changeKey]] and [[id]].
+     * @param array|string $condition the condition. Normally the [[changeKey]] and [[id]].
      * @return $this
      * @throws \yii\base\InvalidConfigException
      */
-    public function delete(string $model, $condition = ''): Command
+    public function delete(string $model, array|string $condition = ''): self
     {
         $params = [];
         $request = $this->db->getQueryBuilder()->delete($model, $condition, $params);
@@ -167,10 +164,9 @@ class Command extends Component
      * @param int|null $fetchMode for compatibility with [[\yii\db\Command]]
      * @return array|\jamesiarmes\PhpEws\ArrayType\ArrayOfRealItemsType all rows of the query result. Each array element
      * is an array representing a row of data. An empty array is returned if the query results in nothing.
-     * @throws \yii\base\InvalidConfigException
-     * @throws Exception
+     * @throws Exception|\yii\base\InvalidConfigException
      */
-    public function queryAll(?int $fetchMode = null)
+    public function queryAll(?int $fetchMode = null): \jamesiarmes\PhpEws\ArrayType\ArrayOfRealItemsType|array
     {
         return $this->queryInternal();
     }
@@ -182,9 +178,9 @@ class Command extends Component
      * for valid fetch modes. If this parameter is null, the value set in [[fetchMode]] will be used.
      * @return array|false the first row (in terms of an array) of the query result. False is returned if the query
      * results in nothing.
-     * @throws Exception execution failed
+     * @throws Exception|\yii\base\InvalidConfigException execution failed
      */
-    public function queryOne(?int $fetchMode = null)
+    public function queryOne(?int $fetchMode = null): bool|array
     {
         return $this->queryInternal();
     }
@@ -193,10 +189,10 @@ class Command extends Component
      * Executes the request
      * This method should only be used for executing non-query operations, such as `INSERT`, `DELETE`, `UPDATE` etc.
      * No result set will be returned.
-     * @return \jamesiarmes\PhpEws\Type\ItemIdType|boolean true if the request was successful, otherwise false
+     * @return \jamesiarmes\PhpEws\Type\ItemIdType|bool true if the request was successful, otherwise false
      * @throws Exception execution failed
      */
-    public function execute()
+    public function execute(): \jamesiarmes\PhpEws\Type\ItemIdType|bool
     {
         /** @var \jamesiarmes\PhpEws\Request\CreateItemType $request */
         $request = $this->getRequest();
@@ -266,9 +262,9 @@ class Command extends Component
      * @param string|null $method method of the [[\jamesiarmes\PhpEws\Client]] to be called
      *
      * @return mixed
-     * @throws Exception
+     * @throws Exception|\yii\base\InvalidConfigException
      */
-    protected function queryInternal(?string $method = null)
+    protected function queryInternal(?string $method = null): mixed
     {
         $request = $this->getRequest();
         if (null === $method) {
@@ -313,20 +309,12 @@ class Command extends Component
                 ]);
             }
 
-            switch ($method) {
-                case 'FindItem':
-                    $result = ArrayHelper::getValue($message, 'RootFolder.Items');
-                    break;
-                case 'FindFolder':
-                    $result = ArrayHelper::getValue($message, 'RootFolder.Folders');
-                    break;
-                case 'GetItem':
-                    $result = ArrayHelper::getValue($message, 'Items');
-                    break;
-                default:
-                    $result = [];
-                    break;
-            }
+            $result = match ($method) {
+                'FindItem' => ArrayHelper::getValue($message, 'RootFolder.Items'),
+                'FindFolder' => ArrayHelper::getValue($message, 'RootFolder.Folders'),
+                'GetItem' => ArrayHelper::getValue($message, 'Items'),
+                default => [],
+            };
 
             // TODO: Find better solution
             if (!is_array($result)) {

@@ -28,8 +28,9 @@ class SimpleConditionBuilder extends \yii\db\conditions\SimpleConditionBuilder
     /**
      * {@inheritDoc}
      * @return object|array
+     * @throws \yii\base\InvalidConfigException
      */
-    public function build(ExpressionInterface $expression, array &$params = [])
+    public function build(ExpressionInterface $expression, array &$params = []): object|array
     {
         /** @var \yii\db\conditions\SimpleCondition $expression */
         switch ($expression->getOperator()) {

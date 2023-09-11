@@ -71,12 +71,12 @@ class QueryBuilder extends \yii\db\QueryBuilder
     /**
      * @var array config object to build request from
      */
-    private $_config;
+    private array $_config;
 
     /**
      * @var string
      */
-    private $_modelClass;
+    private string $_modelClass;
 
     /**
      * QueryBuilder constructor.
@@ -281,7 +281,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
      * @return BaseRequestType|object
      * @throws NotSupportedException|\yii\base\InvalidConfigException|\ReflectionException
      */
-    public function insert($table, $columns, &$params)
+    public function insert($table, $columns, &$params): BaseRequestType
     {
         /** @var ActiveRecord $table */
         $config = [];
@@ -335,7 +335,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
      * @return BaseRequestType|object|false
      * @throws NotSupportedException|\yii\base\InvalidConfigException|\ReflectionException
      */
-    public function update($table, $columns, $condition, &$params)
+    public function update($table, $columns, $condition, &$params): bool|BaseRequestType
     {
         /** @var ActiveRecord $table */
         if (!isset($condition['id']) || !isset($condition['changeKey'])) {
@@ -387,7 +387,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
      * @return BaseRequestType|object|false
      * @throws \yii\base\InvalidConfigException
      */
-    public function delete($table, $condition, &$params)
+    public function delete($table, $condition, &$params): bool|BaseRequestType
     {
         if (!isset($condition['id']) || !isset($condition['changeKey'])) {
             // TODO warning
@@ -502,7 +502,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
      * @return array|object
      * @throws \yii\base\InvalidConfigException
      */
-    public function buildCondition($condition, &$params)
+    public function buildCondition($condition, &$params): object|array
     {
         if (empty($condition)) {
             return [];
@@ -523,7 +523,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
      * {@inheritDoc}
      * @return object|array
      */
-    public function buildExpression(ExpressionInterface $expression, &$params = [])
+    public function buildExpression(ExpressionInterface $expression, &$params = []): object|array
     {
         $expression = parent::buildExpression($expression, $params);
 
@@ -675,12 +675,12 @@ class QueryBuilder extends \yii\db\QueryBuilder
 
     /**
      * {@inheritDoc}
-     * @param ActiveRecord $table
      * @throws \yii\base\InvalidConfigException|\ReflectionException
      */
     protected function prepareUpdateSets($table, $columns, $params = []): array
     {
         $this->_modelClass = $table;
+        /** @var ActiveRecord $table */
         $mapping = $table::attributeMapping();
         $property = substr(StringHelper::basename($table::modelName()), 0, -4);
         $changes = [];
@@ -734,7 +734,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
      * @return array|bool|float|int|ActiveRecord|string
      * @throws NotSupportedException|\yii\base\InvalidConfigException|\ReflectionException
      */
-    protected function castDataType(array $dataType, $value, bool $isInsert = true, array $params = [])
+    protected function castDataType(array $dataType, mixed $value, bool $isInsert = true, array $params = []): mixed
     {
         if (count($dataType) > 1) {
             if (false !== in_array('\\DateTime', $dataType)) {
@@ -746,7 +746,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
             $dataType = $dataType[0];
         }
 
-        if (substr($dataType, -2) === '[]') {
+        if (str_ends_with($dataType, '[]')) {
             $dataType = substr($dataType, 0, -2);
             if (!is_array($value)) {
                 $value = [$value];

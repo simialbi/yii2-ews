@@ -6,7 +6,6 @@
 
 namespace simialbi\yii2\ews\conditions;
 
-
 use jamesiarmes\PhpEws\Enumeration\ContainmentComparisonType;
 use jamesiarmes\PhpEws\Enumeration\ContainmentModeType;
 use jamesiarmes\PhpEws\Type\ConstantValueType;
@@ -25,6 +24,7 @@ class LikeConditionBuilder extends \yii\db\conditions\LikeConditionBuilder
     /**
      * {@inheritDoc}
      * @return object
+     * @throws \yii\base\InvalidConfigException
      */
     public function build(ExpressionInterface $expression, array &$params = []): object
     {

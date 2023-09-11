@@ -34,14 +34,14 @@ class ActiveQuery extends Query implements ActiveQueryInterface
     /**
      * @var BaseRequestType
      */
-    public $request;
+    public BaseRequestType $request;
 
     /**
      * Constructor.
      * @param string $modelClass the model class associated with this query
      * @param array $config configurations to be applied to the newly created query object
      */
-    public function __construct($modelClass, array $config = [])
+    public function __construct(string $modelClass, array $config = [])
     {
         $this->modelClass = $modelClass;
         parent::__construct($config);
@@ -53,7 +53,7 @@ class ActiveQuery extends Query implements ActiveQueryInterface
      * an [[EVENT_INIT]] event. If you override this method, make sure you call the parent implementation at the end
      * to ensure triggering of the event.
      */
-    public function init()
+    public function init(): void
     {
         parent::init();
         $this->trigger(self::EVENT_INIT);
@@ -79,6 +79,7 @@ class ActiveQuery extends Query implements ActiveQueryInterface
         if (empty($rows)) {
             return [];
         }
+
 
         $models = $this->createModels($this->mapAttributes($rows));
 //        if (!empty($this->join) && $this->indexBy === null) {
@@ -110,7 +111,7 @@ class ActiveQuery extends Query implements ActiveQueryInterface
      * if the query results in nothing.
      * @throws \Exception
      */
-    public function one($db = null)
+    public function one($db = null): ActiveRecord|array|null
     {
         $row = parent::one($db);
         if ($row !== false) {
@@ -136,7 +137,7 @@ class ActiveQuery extends Query implements ActiveQueryInterface
             $db = $modelClass::getDb();
         }
 
-        if ($this->request === null) {
+        if (!isset($this->request)) {
             [$request, $params] = $db->getQueryBuilder()->build($this);
         } else {
             $request = $this->request;
@@ -152,12 +153,12 @@ class ActiveQuery extends Query implements ActiveQueryInterface
     /**
      * Map attributes in rows from EWS classes to AR classes
      *
-     * @param array||\jamesiarmes\PhpEws\ArrayType\ArrayOfRealItemsType $rows Rows to map
+     * @param \jamesiarmes\PhpEws\ArrayType\ArrayOfRealItemsType|array $rows Rows to map
      *
      * @return array
      * @throws \Exception
      */
-    protected function mapAttributes($rows): array
+    protected function mapAttributes(\jamesiarmes\PhpEws\ArrayType\ArrayOfRealItemsType|array $rows): array
     {
         $mapping = call_user_func([$this->modelClass, 'attributeMapping']);
         $rows = ArrayHelper::toArray($rows);
@@ -201,8 +202,8 @@ class ActiveQuery extends Query implements ActiveQueryInterface
                             break;
                         default:
                             if (isset($attribute['foreignModel'])) {
-                                $modelClass = ($isArray = (substr($attribute['dataType'][0], -2) === '[]'))
-                                    ? substr($attribute['dataType'][0], -2)
+                                $modelClass = ($isArray = str_ends_with($attribute['dataType'][0], '[]'))
+                                    ? substr($attribute['dataType'][0], 0, -2)
                                     : $attribute['dataType'][0];
                                 if (!class_exists("simialbi\\yii2\\ews\models\\$modelClass")) {
                                     continue 2;
@@ -212,7 +213,7 @@ class ActiveQuery extends Query implements ActiveQueryInterface
                                     'class' => "simialbi\\yii2\\ews\models\\$modelClass"
                                 ]);
                                 $queryInstance = new self(get_class($class));
-                                $models = $queryInstance->populate([$value]);
+                                $models = $queryInstance->populate($isArray ? $value : [$value]);
                                 $value = $isArray ? $models : ArrayHelper::getValue($models, 0);
                             }
                             break;

@@ -15,14 +15,14 @@ class Client extends \jamesiarmes\PhpEws\Client
     /**
      * @var string explicit location (prevent auto generate)
      */
-    protected $location;
+    protected string $location;
 
     /**
      * Sets the location property
      *
      * @param string $location
      */
-    public function setLocation(string $location)
+    public function setLocation(string $location): void
     {
         $this->location = $location;
 

@@ -23,8 +23,9 @@ class ConjunctionConditionBuilder extends \yii\db\conditions\ConjunctionConditio
     /**
      * {@inheritDoc}
      * @return object|object[]
+     * @throws \yii\base\InvalidConfigException
      */
-    public function build(ExpressionInterface $condition, array &$params = [])
+    public function build(ExpressionInterface $condition, array &$params = []): object|array
     {
         /** @var \yii\db\conditions\ConjunctionCondition $condition */
         $expressions = $condition->getExpressions();

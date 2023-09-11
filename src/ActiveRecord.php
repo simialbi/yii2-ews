@@ -24,7 +24,7 @@ class ActiveRecord extends BaseActiveRecord
     /**
      * @var array
      */
-    private $_attributeFields = [];
+    private array $_attributeFields = [];
 
     /**
      * Declares the name of the corresponding php ews model name.
