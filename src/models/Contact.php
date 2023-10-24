@@ -19,8 +19,8 @@ use yii\helpers\ArrayHelper;
  * @property string $changeKey => \jamesiarmes\PhpEws\Type\ItemIdType:ItemId.ChangeKey
  * @property string $parentFolderId => \jamesiarmes\PhpEws\Type\FolderIdType:ParentFolderId.Id
  * @property string $parentFolderChangeKey => \jamesiarmes\PhpEws\Type\FolderIdType:ParentFolderId.ChangeKey
- * @property string $email => Mailbox.EmailAddress
- * @property string $name => Mailbox.Name
+ * @property string $email => \jamesiarmes\PhpEws\Type\EmailAddressType:Mailbox.EmailAddress
+ * @property string $name => \jamesiarmes\PhpEws\Type\EmailAddressType:Mailbox.Name
  */
 class Contact extends ActiveRecord
 {

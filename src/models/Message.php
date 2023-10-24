@@ -31,7 +31,7 @@ use yii\behaviors\AttributeTypecastBehavior;
  * @property-read string|\DateTime|integer $createdAt => DateTimeCreated
  * @property-read string|\DateTime|integer $updatedAt => LastModifiedTime
  *
- * @property Attachment[] $attachments => \jamesiarmes\PhpEws\Type\ArrayOfAttachmentsType:Attachments.FileAttachment
+ * @property Attachment[] $attachments => \jamesiarmes\PhpEws\ArrayType\ArrayOfAttachmentsType:Attachments.FileAttachment
  * @property Contact $from => \jamesiarmes\PhpEws\Type\SingleRecipientType:From
  * @property Contact $sender => \jamesiarmes\PhpEws\Type\SingleRecipientType:Sender
  * @property Contact[] $to => \jamesiarmes\PhpEws\Type\ArrayOfRecipientsType:ToRecipients.Mailbox

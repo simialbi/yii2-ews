@@ -57,7 +57,7 @@ class ActiveRecord extends BaseActiveRecord
 
     /**
      * {@inheritDoc}
-     * @throws \yii\base\InvalidConfigException
+     * @throws InvalidConfigException
      */
     public static function find(): ActiveQuery
     {
@@ -67,7 +67,7 @@ class ActiveRecord extends BaseActiveRecord
     /**
      * {@inheritDoc}
      * @return \simialbi\yii2\ews\Connection
-     * @throws \yii\base\InvalidConfigException
+     * @throws InvalidConfigException
      */
     public static function getDb(): Connection
     {
@@ -77,7 +77,7 @@ class ActiveRecord extends BaseActiveRecord
     /**
      * {@inheritDoc}
      * @return boolean
-     * @throws \yii\base\NotSupportedException|Exception|InvalidConfigException
+     * @throws \yii\base\NotSupportedException|Exception|InvalidConfigException|\ReflectionException
      */
     public static function updateAll($attributes, $condition = null): bool
     {
@@ -207,7 +207,7 @@ class ActiveRecord extends BaseActiveRecord
      *
      * @param string|null $value The date time string
      * @return string|null The formatted date time string
-     * @throws \yii\base\InvalidConfigException
+     * @throws InvalidConfigException
      */
     public function typeCastDateTime(?string $value): ?string
     {
