@@ -7,7 +7,7 @@ use jamesiarmes\PhpEws\Request\GetAttachmentType;
 use jamesiarmes\PhpEws\Type\AttachmentType;
 use jamesiarmes\PhpEws\Type\RequestAttachmentIdType;
 use simialbi\yii2\ews\ActiveRecord;
-use yii\helpers\ArrayHelper;
+use yii\base\InvalidConfigException;
 
 /**
  * @property string $id => \jamesiarmes\PhpEws\Type\AttachmentIdType:AttachmentId.Id
@@ -16,19 +16,14 @@ use yii\helpers\ArrayHelper;
  * @property string $contentId => ContentId
  * @property string $location => ContentLocation
  * @property string $mime => ContentType
- * @property bool $isInline => IsInline
+ * @property boolean $isInline => IsInline
  * @property string $name => Name
- * @property int $size => Size
- *
- * @property-read $content
+ * @property integer $size => Size
+ * @property string $content => \jamesiarmes\PhpEws\Type\FileAttachmentType:Content
+ * @property boolean $isContactPhoto => \jamesiarmes\PhpEws\Type\FileAttachmentType:IsContactPhoto
  */
 class Attachment extends ActiveRecord
 {
-    /**
-     * @var string The binary content
-     */
-    private string $_content;
-
     /**
      * {@inheritDoc}
      */
@@ -43,31 +38,24 @@ class Attachment extends ActiveRecord
     public function rules(): array
     {
         return [
-            [['id', 'changeKey', 'contentId', 'location', 'mime', 'name'], 'string'],
-            [['isInline'], 'boolean'],
-            ['size', 'int'],
+            [['id', 'rootId', 'rootChangeKey', 'contentId', 'location', 'mime', 'name', 'content'], 'string'],
+            [['isInline', 'isContactPhoto'], 'boolean'],
+            ['size', 'integer'],
 
-            ['isInline', 'default', 'value' => false]
+            [['isInline', 'isContactPhoto'], 'default', 'value' => false]
         ];
     }
 
     /**
      * {@inheritDoc}
-     */
-    public function fields(): array
-    {
-        return ArrayHelper::merge(parent::fields(), ['content' => 'content']);
-    }
-
-    /**
-     * Load binary content
-     * @return string
-     * @throws \yii\base\InvalidConfigException
+     * @throws InvalidConfigException
      * @todo Find better solution
      */
-    public function getContent(): string
+    public function afterFind(): void
     {
-        if (!isset($this->_content)) {
+        parent::afterFind();
+
+        if (empty($this->content)) {
             $request = new GetAttachmentType();
             $request->AttachmentIds = new NonEmptyArrayOfRequestAttachmentIdsType();
 
@@ -78,9 +66,11 @@ class Attachment extends ActiveRecord
             $response = self::getDb()->getClient()->GetAttachment($request);
             $message = $response->ResponseMessages->GetAttachmentResponseMessage[0];
 
-            $this->_content = $message->Attachments->FileAttachment[0]->Content;
-        }
+            $this->content = $message->Attachments->FileAttachment[0]->Content;
+            $this->isContactPhoto = $message->Attachments->FileAttachment[0]->IsContactPhoto;
 
-        return $this->_content;
+            $this->setOldAttribute('content', $this->content);
+            $this->setOldAttribute('isContactPhoto', $this->isContactPhoto);
+        }
     }
 }

@@ -13,7 +13,9 @@ use jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfBaseItemIdsType;
 use jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfFieldOrdersType;
 use jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfItemChangeDescriptionsType;
 use jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfItemChangesType;
+use jamesiarmes\PhpEws\Enumeration\AffectedTaskOccurrencesType;
 use jamesiarmes\PhpEws\Enumeration\CalendarItemCreateOrDeleteOperationType;
+use jamesiarmes\PhpEws\Enumeration\CalendarItemUpdateOperationType;
 use jamesiarmes\PhpEws\Enumeration\DefaultShapeNamesType;
 use jamesiarmes\PhpEws\Enumeration\DisposalType;
 use jamesiarmes\PhpEws\Enumeration\DistinguishedFolderIdNameType;
@@ -47,11 +49,16 @@ use jamesiarmes\PhpEws\Type\RestrictionType;
 use jamesiarmes\PhpEws\Type\SetItemFieldType;
 use jamesiarmes\PhpEws\Type\TargetFolderIdType;
 use jamesiarmes\PhpEws\Type\TaskType;
+use Recurr\Exception\InvalidRRule;
+use Recurr\Rule;
 use simialbi\yii2\ews\models\CalendarEvent;
 use simialbi\yii2\ews\models\Contact;
 use simialbi\yii2\ews\models\Folder;
 use simialbi\yii2\ews\models\Message;
+use simialbi\yii2\ews\models\Task;
+use simialbi\yii2\ews\recurrence\transformers\ExchangeTransformer;
 use Yii;
+use yii\base\InvalidConfigException;
 use yii\base\NotSupportedException;
 use yii\db\ExpressionInterface;
 use yii\helpers\ArrayHelper;
@@ -107,7 +114,22 @@ class QueryBuilder extends \yii\db\QueryBuilder
         $this->_config = [
             'class' => FindItemType::class
         ];
-        if (isset($query->where['id'], $query->where['changeKey'])) {
+        if (isset($query->where['id'])) {
+            if (!is_array($query->where['id'])) {
+                $query->where['id'] = [$query->where['id']];
+            }
+            if (isset($query->where['changeKey']) && !is_array($query->where['changeKey'])) {
+                $query->where['changeKey'] = [$query->where['changeKey']];
+            }
+            $ids = [];
+
+            for ($i = 0; $i < count($query->where['id']); $i++) {
+                $ids[] = Yii::createObject([
+                    'class' => ItemIdType::class,
+                    'Id' => $query->where['id'][$i],
+                    'ChangeKey' => $query->where['changeKey'][$i] ?? null
+                ]);
+            }
             $this->_config = [
                 'class' => GetItemType::class,
                 'ItemShape' => Yii::createObject([
@@ -116,20 +138,13 @@ class QueryBuilder extends \yii\db\QueryBuilder
                 ]),
                 'ItemIds' => Yii::createObject([
                     'class' => NonEmptyArrayOfBaseItemIdsType::class,
-                    'ItemId' => [
-                        Yii::createObject([
-                            'class' => ItemIdType::class,
-                            'Id' => $query->where['id'],
-                            'ChangeKey' => $query->where['changeKey']
-                        ])
-                    ]
+                    'ItemId' => $ids
                 ])
             ];
         } else {
             if (empty($params['folderId'])) {
                 $params['folderId'] = DistinguishedFolderIdNameType::INBOX;
                 if ($query instanceof ActiveQuery) {
-                    /** @var ActiveQuery $query */
                     $this->_modelClass = $query->modelClass;
 
                     switch ($this->_modelClass) {
@@ -141,6 +156,9 @@ class QueryBuilder extends \yii\db\QueryBuilder
                             break;
                         case Contact::class:
                             $params['folderId'] = DistinguishedFolderIdNameType::CONTACTS;
+                            break;
+                        case Task::class:
+                            $params['folderId'] = DistinguishedFolderIdNameType::TODO_SEARCH;
                             break;
                     }
                 }
@@ -375,6 +393,9 @@ class QueryBuilder extends \yii\db\QueryBuilder
         if ($table::modelName() === MessageType::class) {
             $config['MessageDisposition'] = MessageDispositionType::SAVE_ONLY;
         }
+        if ($table::modelName() === CalendarItemType::class) {
+            $config['SendMeetingInvitationsOrCancellations'] = CalendarItemUpdateOperationType::SEND_ONLY_TO_CHANGED;
+        }
 
         return Yii::createObject($config);
     }
@@ -382,7 +403,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
     /**
      * {@inheritDoc}
      *
-     * @param string $table active record class name
+     * @param string|ActiveRecord $table active record class name
      *
      * @return BaseRequestType|object|false
      * @throws \yii\base\InvalidConfigException
@@ -408,6 +429,13 @@ class QueryBuilder extends \yii\db\QueryBuilder
                 ]
             ])
         ];
+
+        if ($table::modelName() === CalendarItemType::class) {
+            $config['SendMeetingCancellations'] = CalendarItemCreateOrDeleteOperationType::SEND_TO_ALL_AND_SAVE_COPY;
+        }
+        if ($table::modelName() === TaskType::class) {
+            $config['AffectedTaskOccurrences'] = AffectedTaskOccurrencesType::ALL;
+        }
 
         return Yii::createObject($config);
     }
@@ -525,9 +553,8 @@ class QueryBuilder extends \yii\db\QueryBuilder
      */
     public function buildExpression(ExpressionInterface $expression, &$params = []): object|array
     {
+        /** @var object|ExpressionInterface $expression */
         $expression = parent::buildExpression($expression, $params);
-
-        /** @var object $expression */
 
         return $expression;
     }
@@ -561,9 +588,12 @@ class QueryBuilder extends \yii\db\QueryBuilder
                     case 'subject':
                         return UnindexedFieldURIType::ITEM_SUBJECT;
                     case 'body':
+                    case 'format':
                         return UnindexedFieldURIType::ITEM_BODY;
                     case 'type':
                         return UnindexedFieldURIType::CALENDAR_ITEM_TYPE;
+                    case 'recurrence':
+                        return UnindexedFieldURIType::CALENDAR_RECURRENCE;
                     case 'isRecurring':
                         return UnindexedFieldURIType::CALENDAR_IS_RECURRING;
                     case 'isAllDay':
@@ -578,6 +608,8 @@ class QueryBuilder extends \yii\db\QueryBuilder
                         return UnindexedFieldURIType::ITEM_LAST_MODIFIED_TIME;
                     case 'createdAt':
                         return UnindexedFieldURIType::ITEM_DATE_TIME_CREATED;
+                    case 'attachments':
+                        return UnindexedFieldURIType::ITEM_ATTACHMENTS;
                 }
                 break;
             case Message::class:
@@ -604,6 +636,8 @@ class QueryBuilder extends \yii\db\QueryBuilder
                         return UnindexedFieldURIType::ITEM_DATE_TIME_CREATED;
                     case 'updatedAt':
                         return UnindexedFieldURIType::ITEM_LAST_MODIFIED_TIME;
+                    case 'attachments':
+                        return UnindexedFieldURIType::ITEM_ATTACHMENTS;
                 }
                 break;
             case Folder::class:
@@ -627,7 +661,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
 
     /**
      * {@inheritDoc}
-     * @throws NotSupportedException|\yii\base\InvalidConfigException|\ReflectionException
+     * @throws NotSupportedException|\yii\base\InvalidConfigException|\ReflectionException|InvalidRRule
      */
     protected function prepareInsertValues($table, $columns, $params = []): array
     {
@@ -694,36 +728,73 @@ class QueryBuilder extends \yii\db\QueryBuilder
 
             try {
                 $value = $this->castDataType($mapping[$name]['dataType'], $value, false, $params);
-            } catch (NotSupportedException $e) {
+            } catch (NotSupportedException|InvalidRRule) {
                 continue;
             }
 
             $val = [
                 'class' => $table::modelName()
             ];
-            if ($mapping[$name]['foreignModel']) {
+            if (!empty($mapping[$name]['foreignModel'])) {
                 $tmp = explode('.', $mapping[$name]['foreignField']);
                 $field = array_shift($tmp);
 
-                $val[$field] = Yii::createObject(ArrayHelper::merge(
+                $val[$field] = !is_object($value) ? Yii::createObject(ArrayHelper::merge(
                     ['class' => $mapping[$name]['foreignModel']],
                     [$tmp[0] => $value]
-                ));
+                )) : $value;
             } else {
                 $val[$mapping[$name]['foreignField']] = $value;
             }
 
-            $changes[] = Yii::createObject([
+            $changes[$uri] = $this->merge($changes[$uri] ?? [], $val);
+        }
+
+        return array_map(function (string $uri, array $item) use ($property): SetItemFieldType {
+            /** @var SetItemFieldType $obj */
+            $obj = Yii::createObject([
                 'class' => SetItemFieldType::class,
                 'FieldURI' => Yii::createObject([
                     'class' => PathToUnindexedFieldType::class,
                     'FieldURI' => $uri
                 ]),
-                $property => Yii::createObject($val)
+                $property => Yii::createObject($item)
             ]);
+
+            return $obj;
+        }, array_keys($changes), array_values($changes));
+    }
+
+    /**
+     * Merge two objects or arrays recursively
+     * @param array|object $a
+     * @param array|object $b
+     * @return array|object
+     * @throws InvalidConfigException
+     */
+    protected function merge(array|object $a, array|object $b): array|object
+    {
+        foreach ($b as $k => $v) {
+            if (is_object($a)) {
+                if (is_array($v)) {
+                    $a->$k = ArrayHelper::merge($a->$k, $b->$k);
+                } elseif (is_object($v)) {
+                    $a->$k = $this->merge($a->$k, $v);
+                } elseif (!empty($b->$k)) {
+                    $a->$k = $b->$k;
+                }
+            } else {
+                if (is_array($v)) {
+                    $a[$k] = ArrayHelper::merge($a[$k], $v);
+                } elseif (is_object($v)) {
+                    $a[$k] = $this->merge($a[$k] ?? Yii::createObject(['class' => $v::class]), $v);
+                } elseif (!empty($v)) {
+                    $a[$k] = $v;
+                }
+            }
         }
 
-        return $changes;
+        return $a;
     }
 
     /**
@@ -732,13 +803,15 @@ class QueryBuilder extends \yii\db\QueryBuilder
      * @param boolean $isInsert
      * @param array $params
      * @return array|bool|float|int|ActiveRecord|string
-     * @throws NotSupportedException|\yii\base\InvalidConfigException|\ReflectionException
+     * @throws NotSupportedException|\yii\base\InvalidConfigException|\ReflectionException|InvalidRRule
      */
     protected function castDataType(array $dataType, mixed $value, bool $isInsert = true, array $params = []): mixed
     {
         if (count($dataType) > 1) {
             if (false !== in_array('\\DateTime', $dataType)) {
                 $dataType = 'DateTime';
+            } elseif (false !== in_array('\\Recurr\\Rule', $dataType)) {
+                $dataType = 'Recurrence';
             } else {
                 $dataType = 'string';
             }
@@ -775,6 +848,16 @@ class QueryBuilder extends \yii\db\QueryBuilder
                 break;
             case 'DateTime':
                 $value = Yii::$app->formatter->asDatetime($value, 'yyyy-MM-dd\'T\'HH:mm:ssxxx');
+                break;
+            case 'Recurrence':
+                if (empty($value)) {
+                    break;
+                }
+                $t = new ExchangeTransformer();
+                if (is_string($value)) {
+                    $value = Rule::createFromString($value);
+                }
+                $value = $t->transformRecurrenceToEws($value);
                 break;
             default:
                 if (!$isInsert) {

@@ -25,3 +25,5 @@ composer.lock
 
 # phpunit itself is not needed
 phpunit.phar
+.phpunit.result.cache
+tests/log

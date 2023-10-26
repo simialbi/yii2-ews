@@ -10,8 +10,10 @@ use jamesiarmes\PhpEws\Enumeration\BodyTypeType;
 use jamesiarmes\PhpEws\Enumeration\CalendarItemTypeType;
 use jamesiarmes\PhpEws\Enumeration\LegacyFreeBusyType;
 use jamesiarmes\PhpEws\Type\CalendarItemType;
+use jamesiarmes\PhpEws\Type\RecurrenceType;
+use Recurr\Rule;
 use simialbi\yii2\ews\ActiveRecord;
-use Yii;
+use simialbi\yii2\ews\recurrence\transformers\ExchangeTransformer;
 use yii\behaviors\AttributeTypecastBehavior;
 
 /**
@@ -29,13 +31,15 @@ use yii\behaviors\AttributeTypecastBehavior;
  * @property string $format => \jamesiarmes\PhpEws\Type\BodyType:Body.BodyType
  * @property string $location => Location
  * @property string $type => CalendarItemType
- * @property boolean $isRecurring => IsRecurring
+ * @property string|\Recurr\Rule $recurrence => \jamesiarmes\PhpEws\Type\RecurrenceType:Recurrence
+ * @property-read boolean $isRecurring => IsRecurring
  * @property boolean $isAllDay => IsAllDayEvent
  * @property boolean $isCancelled => IsCancelled
  * @property boolean $isOnline => IsOnlineMeeting
  * @property string $status => LegacyFreeBusyStatus
  * @property-read string|\DateTime|integer $createdAt => DateTimeCreated
  * @property-read string|\DateTime|integer $updatedAt => LastModifiedTime
+ * @property Attachment[] $attachments => \jamesiarmes\PhpEws\ArrayType\ArrayOfAttachmentsType:Attachments.FileAttachment
  *
  * @property Contact $organizer => \jamesiarmes\PhpEws\Type\SingleRecipientType:Organizer
  * @property Attendee[] $requiredAttendees => \jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfAttendeesType:RequiredAttendees.Attendee
@@ -85,9 +89,23 @@ class CalendarEvent extends ActiveRecord
                 ]
             ],
 
+            ['recurrence', 'safe'],
+
             ['status', 'default', 'value' => LegacyFreeBusyType::BUSY],
             ['format', 'default', 'value' => BodyTypeType::HTML]
         ];
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function beforeSave($insert): bool
+    {
+        if ($this->isAttributeChanged('body', false)) {
+            $this->markAttributeDirty('format');
+        }
+
+        return parent::beforeSave($insert);
     }
 
     /**
@@ -106,7 +124,15 @@ class CalendarEvent extends ActiveRecord
                     'start' => [$this, 'typeCastDateTime'],
                     'end' => [$this, 'typeCastDateTime'],
                     'createdAt' => [$this, 'typeCastDateTime'],
-                    'updatedAt' => [$this, 'typeCastDateTime']
+                    'updatedAt' => [$this, 'typeCastDateTime'],
+                    'recurrence' => function (string|RecurrenceType|null|array $value): ?Rule {
+                        if (empty($value)) {
+                            return null;
+                        }
+
+                        $transformer = new ExchangeTransformer();
+                        return $transformer->transformRecurrenceFromEws($value);
+                    }
                 ]
             ]
         ];

@@ -6,7 +6,6 @@
 
 namespace simialbi\yii2\ews;
 
-
 /**
  * Exception represents an exception that is caused by some EWS-related operations.
  *

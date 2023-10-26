@@ -6,119 +6,182 @@
 
 namespace yiiunit\extensions\ews;
 
+use jamesiarmes\PhpEws\Enumeration\BodyTypeType;
 use jamesiarmes\PhpEws\Enumeration\DefaultShapeNamesType;
 use jamesiarmes\PhpEws\Enumeration\DisposalType;
 use jamesiarmes\PhpEws\Enumeration\DistinguishedFolderIdNameType;
 use jamesiarmes\PhpEws\Enumeration\LegacyFreeBusyType;
 use jamesiarmes\PhpEws\Enumeration\SortDirectionType;
 use jamesiarmes\PhpEws\Enumeration\UnindexedFieldURIType;
+use simialbi\yii2\ews\models\Attachment;
 use simialbi\yii2\ews\models\Attendee;
 use simialbi\yii2\ews\models\CalendarEvent;
 use Yii;
+use yii\base\InvalidConfigException;
+use yii\base\NotSupportedException;
 
 class CalendarEventTest extends TestCase
 {
+    /**
+     * @throws \ReflectionException
+     */
     public function testAttributeMapping()
     {
         $attributeMapping = CalendarEvent::attributeMapping();
         $expectedSubset = [
             'id' => [
+                'readOnly' => false,
                 'dataType' => ['string'],
                 'foreignModel' => '\jamesiarmes\PhpEws\Type\ItemIdType',
                 'foreignField' => 'ItemId.Id'
             ],
             'changeKey' => [
+                'readOnly' => false,
                 'dataType' => ['string'],
                 'foreignModel' => '\jamesiarmes\PhpEws\Type\ItemIdType',
                 'foreignField' => 'ItemId.ChangeKey'
             ],
             'parentFolderId' => [
+                'readOnly' => false,
                 'dataType' => ['string'],
                 'foreignModel' => '\jamesiarmes\PhpEws\Type\FolderIdType',
                 'foreignField' => 'ParentFolderId.Id'
             ],
             'parentFolderChangeKey' => [
+                'readOnly' => false,
                 'dataType' => ['string'],
                 'foreignModel' => '\jamesiarmes\PhpEws\Type\FolderIdType',
                 'foreignField' => 'ParentFolderId.ChangeKey'
             ],
             'start' => [
+                'readOnly' => false,
                 'dataType' => ['string', '\DateTime', 'integer'],
                 'foreignModel' => null,
                 'foreignField' => 'Start'
             ],
             'end' => [
+                'readOnly' => false,
                 'dataType' => ['string', '\DateTime', 'integer'],
                 'foreignModel' => null,
                 'foreignField' => 'End'
             ],
             'subject' => [
+                'readOnly' => false,
                 'dataType' => ['string'],
                 'foreignModel' => null,
                 'foreignField' => 'Subject'
             ],
             'body' => [
+                'readOnly' => false,
                 'dataType' => ['string'],
                 'foreignModel' => '\jamesiarmes\PhpEws\Type\BodyType',
                 'foreignField' => 'Body._'
             ],
             'format' => [
+                'readOnly' => false,
                 'dataType' => ['string'],
                 'foreignModel' => '\jamesiarmes\PhpEws\Type\BodyType',
                 'foreignField' => 'Body.BodyType'
             ],
             'location' => [
+                'readOnly' => false,
                 'dataType' => ['string'],
                 'foreignModel' => null,
                 'foreignField' => 'Location'
             ],
             'type' => [
+                'readOnly' => false,
                 'dataType' => ['string'],
                 'foreignModel' => null,
                 'foreignField' => 'CalendarItemType'
             ],
             'isRecurring' => [
+                'readOnly' => true,
                 'dataType' => ['boolean'],
                 'foreignModel' => null,
                 'foreignField' => 'IsRecurring'
             ],
             'isAllDay' => [
+                'readOnly' => false,
                 'dataType' => ['boolean'],
                 'foreignModel' => null,
                 'foreignField' => 'IsAllDayEvent'
             ],
             'isCancelled' => [
+                'readOnly' => false,
                 'dataType' => ['boolean'],
                 'foreignModel' => null,
                 'foreignField' => 'IsCancelled'
             ],
             'isOnline' => [
+                'readOnly' => false,
                 'dataType' => ['boolean'],
                 'foreignModel' => null,
                 'foreignField' => 'IsOnlineMeeting'
             ],
             'status' => [
+                'readOnly' => false,
                 'dataType' => ['string'],
                 'foreignModel' => null,
                 'foreignField' => 'LegacyFreeBusyStatus'
             ],
             'createdAt' => [
+                'readOnly' => true,
                 'dataType' => ['string', '\DateTime', 'integer'],
                 'foreignModel' => null,
                 'foreignField' => 'DateTimeCreated'
             ],
             'updatedAt' => [
+                'readOnly' => true,
                 'dataType' => ['string', '\DateTime', 'integer'],
                 'foreignModel' => null,
                 'foreignField' => 'LastModifiedTime'
             ],
+            'recurrence' => [
+                'readOnly' => false,
+                'dataType' => ['string', '\Recurr\Rule'],
+                'foreignModel' => '\jamesiarmes\PhpEws\Type\RecurrenceType',
+                'foreignField' => 'Recurrence'
+            ],
+            'organizer' => [
+                'readOnly' => false,
+                'dataType' => ['Contact'],
+                'foreignModel' => '\jamesiarmes\PhpEws\Type\SingleRecipientType',
+                'foreignField' => 'Organizer'
+            ],
+            'requiredAttendees' => [
+                'readOnly' => false,
+                'dataType' => ['Attendee[]'],
+                'foreignModel' => '\jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfAttendeesType',
+                'foreignField' => 'RequiredAttendees.Attendee'
+            ],
+            'optionalAttendees' => [
+                'readOnly' => false,
+                'dataType' => ['Attendee[]'],
+                'foreignModel' => '\jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfAttendeesType',
+                'foreignField' => 'OptionalAttendees.Attendee'
+            ],
+            'attachments' => [
+                'readOnly' => false,
+                'dataType' => ['Attachment[]'],
+                'foreignModel' => '\jamesiarmes\PhpEws\ArrayType\ArrayOfAttachmentsType',
+                'foreignField' => 'Attachments.FileAttachment'
+            ]
         ];
+
+        foreach ($attributeMapping as $key => $value) {
+            $this->assertArrayHasKey($key, $expectedSubset);
+        }
+
         foreach ($expectedSubset as $key => $value) {
             $this->assertArrayHasKey($key, $attributeMapping);
             $this->assertSame($value, $attributeMapping[$key]);
         }
     }
 
+    /**
+     * @throws InvalidConfigException
+     */
     public function testQueryBuilderFind()
     {
         $query = CalendarEvent::find();
@@ -168,6 +231,11 @@ class CalendarEventTest extends TestCase
         $this->assertEquals(SortDirectionType::ASCENDING, $request->SortOrder->FieldOrder[0]->Order);
     }
 
+    /**
+     * @throws NotSupportedException
+     * @throws InvalidConfigException
+     * @throws \ReflectionException
+     */
     public function testQueryBuilderInsert()
     {
         $startDate = Yii::$app->formatter->asDate('+2 hours', 'yyyy-MM-dd HH:mm xxx');
@@ -176,14 +244,30 @@ class CalendarEventTest extends TestCase
 
         $event->subject = 'Test';
         $event->body = '<p>This is a test</p>';
+        $event->format = BodyTypeType::HTML;
         $event->start = $startDate;
         $event->end = $endDate;
         $event->requiredAttendees = [
             new Attendee(['name' => 'John Doe', 'email' => 'john.doe@example.com']),
             new Attendee(['name' => 'Jane Doe', 'email' => 'jane.doe@example.com'])
         ];
+        $event->recurrence = 'FREQ=YEARLY;INTERVAL=1;BYMONTHDAY=20;BYMONTH=11';
 
-        $this->assertEquals(true, $event->validate());
+        $file = b'This is a text file';
+        $attachments = [
+            new Attachment([
+                'name' => 'test',
+                'content' => $file,
+                'mime' => 'text/plain',
+                'isInline' => false,
+                'size' => strlen($file)
+            ])
+        ];
+        $event->attachments = $attachments;
+
+        $event->beforeSave(true);
+
+        $this->assertTrue($event->validate());
 
         $values = $event->getDirtyAttributes();
         $params = [
@@ -213,11 +297,27 @@ class CalendarEventTest extends TestCase
         $this->assertEquals('<p>This is a test</p>', $calendarItem->Body->_);
         $this->assertEquals('Test', $calendarItem->Subject);
         $this->assertInstanceOf('jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfAttendeesType', $calendarItem->RequiredAttendees);
+
+        // Attendee
         $attendee = $calendarItem->RequiredAttendees->Attendee[0];
         $this->assertInstanceOf('jamesiarmes\PhpEws\Type\AttendeeType', $attendee);
         $this->assertInstanceOf('jamesiarmes\PhpEws\Type\EmailAddressType', $attendee->Mailbox);
         $this->assertEquals('john.doe@example.com', $attendee->Mailbox->EmailAddress);
         $this->assertEquals('John Doe', $attendee->Mailbox->Name);
+
+        // Recurrence
+        $this->assertInstanceOf('jamesiarmes\PhpEws\Type\RecurrenceType', $calendarItem->Recurrence);
+        $this->assertIsObject($calendarItem->Recurrence);
+        $this->assertIsObject($calendarItem->Recurrence->NoEndRecurrence);
+
+        // Attachments
+        $attachment = $calendarItem->Attachments->FileAttachment[0];
+        $this->assertObjectHasProperty('Attachments', $calendarItem);
+        $this->assertInstanceOf('jamesiarmes\PhpEws\ArrayType\ArrayOfAttachmentsType', $calendarItem->Attachments);
+        $this->assertObjectHasProperty('FileAttachment', $calendarItem->Attachments);
+        $this->assertInstanceOf('jamesiarmes\PhpEws\Type\AttachmentType', $attachment);
+        $this->assertEquals('text/plain', $attachment->ContentType);
+        $this->assertEquals(19, $attachment->Size);
     }
 
     public function testQueryBuilderUpdate()
@@ -228,6 +328,7 @@ class CalendarEventTest extends TestCase
 
         $event->subject = 'Test';
         $event->body = '<p>This is a test</p>';
+        $event->format = 'HTML';
         $event->start = $startDate;
         $event->end = $endDate;
         $event->requiredAttendees = [
@@ -275,6 +376,7 @@ class CalendarEventTest extends TestCase
         $this->assertEquals(date('c', strtotime($endDate)), $updates->SetItemField[3]->CalendarItem->End);
         $this->assertEquals(UnindexedFieldURIType::CALENDAR_LEGACY_FREE_BUSY_STATUS, $updates->SetItemField[4]->FieldURI->FieldURI);
         $this->assertEquals(LegacyFreeBusyType::BUSY, $updates->SetItemField[4]->CalendarItem->LegacyFreeBusyStatus);
+        $this->assertObjectHasProperty('SendMeetingInvitationsOrCancellations', $request);
     }
 
     public function testQueryBuilderDelete()
@@ -293,5 +395,6 @@ class CalendarEventTest extends TestCase
         $this->assertInstanceOf('jamesiarmes\PhpEws\Type\ItemIdType', $request->ItemIds->ItemId[0]);
         $this->assertEquals('7007ACC7-3202-11D1-AAD2-00805FC1270E', $request->ItemIds->ItemId[0]->ChangeKey);
         $this->assertEquals('AAajslgkha32394isdg==', $request->ItemIds->ItemId[0]->Id);
+        $this->assertObjectHasProperty('SendMeetingCancellations', $request);
     }
 }

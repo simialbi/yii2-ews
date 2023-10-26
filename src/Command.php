@@ -230,9 +230,13 @@ class Command extends Component
             switch ($method) {
                 case 'CreateItem':
                 case 'UpdateItem':
-                    if (isset($message->Items->Message)) {
-                        $return = $message->Items->Message[0]->ItemId;
-                    } else {
+                    foreach (['Message', 'CalendarItem', 'Task', 'Item'] as $itemType) {
+                        if (isset($message->Items->{$itemType}[0])) {
+                            $return = $message->Items->{$itemType}[0]->ItemId;
+                            break;
+                        }
+                    }
+                    if (!$return) {
                         foreach ($message->Items as $item) {
                             /** @var \jamesiarmes\PhpEws\Type\ItemType[] $item */
                             $return = $item[0]->ItemId;
@@ -299,35 +303,13 @@ class Command extends Component
             $message = ArrayHelper::getValue($response, "ResponseMessages.{$method}ResponseMessage");
 
             if (is_array($message)) {
-                $message = array_shift($message);
-            }
-
-            if ($message->ResponseCode !== ResponseCodeType::NO_ERROR) {
-                throw new Exception($message->MessageText, [
-                    'responseCode' => $message->ResponseCode,
-                    'responseClass' => $message->ResponseClass
-                ]);
-            }
-
-            $result = match ($method) {
-                'FindItem' => ArrayHelper::getValue($message, 'RootFolder.Items'),
-                'FindFolder' => ArrayHelper::getValue($message, 'RootFolder.Folders'),
-                'GetItem' => ArrayHelper::getValue($message, 'Items'),
-                default => [],
-            };
-
-            // TODO: Find better solution
-            if (!is_array($result)) {
-                $r = new \ReflectionClass($result);
-                foreach ($r->getProperties() as $property) {
-                    if ($property->isPublic() && is_array($result->{$property->name}) && !empty($result->{$property->name})) {
-                        $result = $result->{$property->name};
-                        break;
-                    }
-                }
-            }
-            if ($result instanceof \jamesiarmes\PhpEws\ArrayType\ArrayOfRealItemsType) {
                 $result = [];
+                while ($m = array_shift($message)) {
+                    $tmp = $this->getResult($m, $method);
+                    $result = array_merge($result, $tmp);
+                }
+            } else {
+                $result = $this->getResult($message, $method);
             }
         } catch (Exception $e) {
             throw $e;
@@ -342,6 +324,51 @@ class Command extends Component
         if (isset($cache, $key, $info)) {
             $cache->set($key, [$result], $info[1], $info[2]);
             Yii::debug('Saved query result in cache', __METHOD__);
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param mixed $message
+     * @param string|null $method
+     * @return array|mixed
+     * @throws Exception
+     * @throws \ReflectionException
+     * @throws \Exception
+     */
+    protected function getResult(mixed $message, ?string $method): mixed
+    {
+        if ($message->ResponseCode !== ResponseCodeType::NO_ERROR) {
+            if ($message->ResponseCode === 'ErrorItemNotFound') {
+                return [];
+            }
+            throw new Exception($message->MessageText, [
+                'responseCode' => $message->ResponseCode,
+                'responseClass' => $message->ResponseClass
+            ]);
+        }
+
+        $result = match ($method) {
+            'FindItem' => ArrayHelper::getValue($message, 'RootFolder.Items'),
+            'FindFolder' => ArrayHelper::getValue($message, 'RootFolder.Folders'),
+            'GetItem' => ArrayHelper::getValue($message, 'Items'),
+            default => [],
+        };
+
+        // TODO: Find better solution
+        if (!is_array($result)) {
+            $r = new \ReflectionClass($result);
+            foreach ($r->getProperties() as $property) {
+                if ($property->isPublic() && is_array($result->{$property->name}) && !empty($result->{$property->name})) {
+                    $result = $result->{$property->name};
+                    break;
+                }
+            }
+        }
+
+        if ($result instanceof \jamesiarmes\PhpEws\ArrayType\ArrayOfRealItemsType) {
+            $result = [];
         }
 
         return $result;

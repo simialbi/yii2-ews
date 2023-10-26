@@ -103,6 +103,7 @@ class Connection extends Component
     /**
      * Get the [[Client]] instance.
      * @return Client
+     * @throws InvalidConfigException
      */
     public function getClient(): Client
     {
