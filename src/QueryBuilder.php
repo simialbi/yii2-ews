@@ -750,11 +750,6 @@ class QueryBuilder extends \yii\db\QueryBuilder
             $changes[$uri] = $this->merge($changes[$uri] ?? [], $val);
         }
 
-//        echo '<pre>';
-//        \yii\helpers\VarDumper::dump($changes, 99, true);
-//        echo '</pre>';
-//        die;
-
         return array_map(function (string $uri, array $item) use ($property): SetItemFieldType {
             /** @var SetItemFieldType $obj */
             $obj = Yii::createObject([
