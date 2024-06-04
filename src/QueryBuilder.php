@@ -158,7 +158,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
                             $params['folderId'] = DistinguishedFolderIdNameType::CONTACTS;
                             break;
                         case Task::class:
-                            $params['folderId'] = DistinguishedFolderIdNameType::TODO_SEARCH;
+                            $params['folderId'] = DistinguishedFolderIdNameType::TASKS;
                             break;
                     }
                 }

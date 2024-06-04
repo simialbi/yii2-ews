@@ -120,7 +120,9 @@ class ExchangeTransformer
             $startDate = $recurrence['NoEndRecurrence']['StartDate'];
         } elseif (isset($recurrence['EndDateRecurrence'])) {
             $startDate = $recurrence['EndDateRecurrence']['StartDate'];
-            $rule->setUntil(new \DateTime($recurrence['EndDateRecurrence']['EndDate']));
+            $endDate = (new \DateTime($recurrence['EndDateRecurrence']['EndDate']))
+                ->setTime(23, 59, 59); // EWS is inclusive, so we need the end of the day
+            $rule->setUntil($endDate);
         } elseif (isset($recurrence['NumberedRecurrence'])) {
             $startDate = $recurrence['NumberedRecurrence']['StartDate'];
             $rule->setCount($recurrence['NumberedRecurrence']['NumberOfOccurrences']);
