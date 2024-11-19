@@ -4,7 +4,7 @@ namespace simialbi\yii2\ews\models;
 
 use jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfRequestAttachmentIdsType;
 use jamesiarmes\PhpEws\Request\GetAttachmentType;
-use jamesiarmes\PhpEws\Type\AttachmentType;
+use jamesiarmes\PhpEws\Type\FileAttachmentType;
 use jamesiarmes\PhpEws\Type\RequestAttachmentIdType;
 use simialbi\yii2\ews\ActiveRecord;
 use yii\base\InvalidConfigException;
@@ -29,7 +29,7 @@ class Attachment extends ActiveRecord
      */
     public static function modelName(): string
     {
-        return AttachmentType::class;
+        return FileAttachmentType::class;
     }
 
     /**
