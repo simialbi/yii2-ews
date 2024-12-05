@@ -108,7 +108,7 @@ class Connection extends Component
     public function getClient(): Client
     {
         if (!isset($this->_client)) {
-            $this->_client = new Client($this->server, $this->username, $this->password);
+            $this->_client = new Client($this->server ?? null, $this->username, $this->password);
             if (!empty($this->location)) {
                 $this->_client->setLocation($this->location);
             }
