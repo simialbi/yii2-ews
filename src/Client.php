@@ -62,6 +62,7 @@ class Client extends \jamesiarmes\PhpEws\Client
                 'classmap' => ClassMap::getMap(),
                 'curlopts' => $this->curl_options,
                 'features' => SOAP_SINGLE_ELEMENT_ARRAYS,
+                'trace'    => defined('YII_DEBUG') ? (int)YII_DEBUG : 0
             ]
         );
 
