@@ -315,7 +315,11 @@ class QueryBuilder extends \yii\db\QueryBuilder
             $config['class'] = CreateItemType::class;
             switch ($table::modelName()) {
                 case CalendarItemType::class:
-                    $config['SendMeetingInvitations'] = CalendarItemCreateOrDeleteOperationType::SEND_TO_ALL_AND_SAVE_COPY;
+                    $config['SendMeetingInvitations'] = ArrayHelper::remove(
+                        $params,
+                        'send',
+                        CalendarItemCreateOrDeleteOperationType::SEND_TO_ALL_AND_SAVE_COPY
+                    );
                     $config['SavedItemFolderId'] = Yii::createObject([
                         'class' => TargetFolderIdType::class,
                         'DistinguishedFolderId' => Yii::createObject([
@@ -332,7 +336,11 @@ class QueryBuilder extends \yii\db\QueryBuilder
                     }
                     break;
                 case MessageType::class:
-                    $config['MessageDisposition'] = MessageDispositionType::SEND_AND_SAVE_COPY;
+                    $config['MessageDisposition'] = ArrayHelper::remove(
+                        $params,
+                        'send',
+                        MessageDispositionType::SEND_AND_SAVE_COPY
+                    );
                     break;
             }
             $property = substr(StringHelper::basename($table::modelName()), 0, -4);
@@ -767,8 +775,10 @@ class QueryBuilder extends \yii\db\QueryBuilder
 
     /**
      * Merge two objects or arrays recursively
+     *
      * @param array|object $a
      * @param array|object $b
+     *
      * @return array|object
      * @throws InvalidConfigException
      */
@@ -802,6 +812,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
      * @param mixed $value
      * @param boolean $isInsert
      * @param array $params
+     *
      * @return array|bool|float|int|ActiveRecord|string
      * @throws NotSupportedException|\yii\base\InvalidConfigException|\ReflectionException|InvalidRRule
      */
