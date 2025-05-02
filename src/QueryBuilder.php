@@ -520,8 +520,11 @@ class QueryBuilder extends \yii\db\QueryBuilder
     public function buildLimit($limit, $offset): array
     {
         if (is_int($limit) && is_int($offset)) {
+            $key = $this->_config['class'] === FindFolderType::class
+                ? 'FractionalPageFolderView'
+                : 'FractionalPageItemView';
             return [
-                'FractionalPageItemView' => Yii::createObject([
+                $key => Yii::createObject([
                     'class' => FractionalPageViewType::class,
                     'MaxEntriesReturned' => $limit,
                     'Numerator' => $offset,

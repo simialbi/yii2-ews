@@ -18,10 +18,11 @@ class QueryBuilderTest extends TestCase
         $command = $query->createCommand();
         $this->assertIsObject($command);
 
+        /** @var \jamesiarmes\PhpEws\Request\FindFolderType $request */
         $request = $command->getRequest();
-        $this->assertObjectHasProperty('FractionalPageItemView', $request);
+        $this->assertObjectHasProperty('FractionalPageFolderView', $request);
 
-        $fractionalPageItemView = $request->FractionalPageItemView;
+        $fractionalPageItemView = $request->FractionalPageFolderView;
         $this->assertObjectHasProperty('MaxEntriesReturned', $fractionalPageItemView);
         $this->assertEquals(10, $fractionalPageItemView->MaxEntriesReturned);
 
