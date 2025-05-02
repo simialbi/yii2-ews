@@ -2,6 +2,9 @@
 // ensure we get report on all possible php errors
 error_reporting(-1);
 
+// set timezone
+date_default_timezone_set('Europe/Zurich');
+
 const YII_ENABLE_ERROR_HANDLER = false;
 const YII_DEBUG = true;
 $_SERVER['SCRIPT_NAME'] = '/' . __DIR__;
