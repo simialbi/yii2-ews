@@ -37,7 +37,7 @@ class EwsToRuleTest extends TestCase
         ];
 
         $this->assertEquals(
-            'FREQ=DAILY;UNTIL=20260209T000000;INTERVAL=5',
+            'FREQ=DAILY;UNTIL=20260209T235959;INTERVAL=5',
             $this->getRule($data)->getString()
         );
     }
@@ -71,7 +71,7 @@ class EwsToRuleTest extends TestCase
         ];
 
         $this->assertEquals(
-            'FREQ=WEEKLY;UNTIL=20260504T000000;INTERVAL=2;BYDAY=MO,SA',
+            'FREQ=WEEKLY;UNTIL=20260504T235959;INTERVAL=2;BYDAY=MO,SA',
             $this->getRule($data)->getString()
         );
     }
@@ -203,7 +203,7 @@ class EwsToRuleTest extends TestCase
         ];
 
         $this->assertEquals(
-            'FREQ=YEARLY;UNTIL=20321130T000000;INTERVAL=1;BYDAY=3MO;BYMONTH=11',
+            'FREQ=YEARLY;UNTIL=20321130T235959;INTERVAL=1;BYDAY=3MO;BYMONTH=11',
             $this->getRule($data)->getString()
         );
     }

@@ -71,6 +71,10 @@ class TestCase extends \PHPUnit\Framework\TestCase
                 'urlManager' => [
                     'showScriptName' => true,
                 ],
+                'formatter' => [
+                    'timeZone' => 'Europe/Zurich',
+                    'defaultTimeZone' => 'Europe/Zurich',
+                ],
             ],
             'params' => [
                 'adminEmail' => 'admin@example.com',
