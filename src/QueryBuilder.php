@@ -519,7 +519,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
      */
     public function buildLimit($limit, $offset): array
     {
-        if (null !== $limit && null !== $offset && ctype_digit($limit) && ctype_digit($offset)) {
+        if (is_int($limit) && is_int($offset)) {
             $key = $this->_config['class'] === FindFolderType::class
                 ? 'FractionalPageFolderView'
                 : 'FractionalPageItemView';
