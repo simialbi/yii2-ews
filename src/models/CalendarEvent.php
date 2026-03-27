@@ -44,6 +44,8 @@ use yii\behaviors\AttributeTypecastBehavior;
  * @property Contact $organizer => \jamesiarmes\PhpEws\Type\SingleRecipientType:Organizer
  * @property Attendee[] $requiredAttendees => \jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfAttendeesType:RequiredAttendees.Attendee
  * @property Attendee[] $optionalAttendees => \jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfAttendeesType:OptionalAttendees.Attendee
+ * @property DeletedOccurrence[] $deletedOccurrences => \jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfDeletedOccurrencesType:DeletedOccurrences.DeletedOccurrence
+ * @property ModifiedOccurrence[] $modifiedOccurrences => \jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfOccurrenceInfoType:ModifiedOccurrences.Occurrence
  */
 class CalendarEvent extends ActiveRecord
 {
@@ -75,7 +77,10 @@ class CalendarEvent extends ActiveRecord
                 BodyTypeType::HTML,
                 BodyTypeType::TEXT
             ]],
-            [['organizer', 'requiredAttendees', 'optionalAttendees'], 'safe'],
+            [
+                ['organizer', 'requiredAttendees', 'optionalAttendees', 'deletedOccurrences', 'modifiedOccurrences'],
+                'safe'
+            ],
             [
                 'status',
                 'in',
@@ -131,7 +136,11 @@ class CalendarEvent extends ActiveRecord
                         }
 
                         $transformer = new ExchangeTransformer();
-                        return $transformer->transformRecurrenceFromEws($value);
+                        return $transformer->transformRecurrenceFromEws(
+                            $value,
+                            $this->modifiedOccurrences ?? [],
+                            $this->deletedOccurrences ?? []
+                        );
                     }
                 ]
             ]

@@ -14,8 +14,14 @@ use jamesiarmes\PhpEws\Type\RecurrenceType;
 use jamesiarmes\PhpEws\Type\RelativeMonthlyRecurrencePatternType;
 use jamesiarmes\PhpEws\Type\RelativeYearlyRecurrencePatternType;
 use jamesiarmes\PhpEws\Type\WeeklyRecurrencePatternType;
+use Recurr\DateExclusion;
+use Recurr\DateInclusion;
+use Recurr\Exception\InvalidArgument;
+use Recurr\Exception\InvalidRRule;
 use Recurr\Frequency;
 use Recurr\Rule;
+use simialbi\yii2\ews\models\DeletedOccurrence;
+use simialbi\yii2\ews\models\ModifiedOccurrence;
 use Yii;
 use yii\base\InvalidConfigException;
 use yii\helpers\ArrayHelper;
@@ -26,7 +32,7 @@ class ExchangeTransformer
      * Transform a recurrence rule to an EWS RecurrencyType object
      * @param Rule $rule The rule to transform
      * @return RecurrenceType|null The resulting object
-     * @throws \yii\base\InvalidConfigException
+     * @throws InvalidConfigException
      */
     public function transformRecurrenceToEws(Rule $rule): ?RecurrenceType
     {
@@ -108,10 +114,14 @@ class ExchangeTransformer
     /**
      * Transform an EWS RecurrencyType array to a recurrence rule
      * @param array $recurrence
+     * @param array|ModifiedOccurrence[] $modified
+     * @param array|DeletedOccurrence[] $deleted
      * @return Rule
-     * @throws \Exception
+     * @throws InvalidConfigException
+     * @throws InvalidArgument
+     * @throws InvalidRRule
      */
-    public function transformRecurrenceFromEws(array $recurrence): Rule
+    public function transformRecurrenceFromEws(array $recurrence, array $modified = [], array $deleted = []): Rule
     {
         $rule = new Rule();
 
@@ -185,6 +195,23 @@ class ExchangeTransformer
             $day = $this->weekDayToAbbr($recurrence['RelativeYearlyRecurrence']['DaysOfWeek']);
             $week = $this->stringToWeekDayIndex($recurrence['RelativeYearlyRecurrence']['DayOfWeekIndex']);
             $rule->setByDay([$week . $day]);
+        }
+
+        $exDates = [];
+        $rDates = [];
+        foreach ($deleted as $item) {
+            $exDates[] = new DateExclusion(new \DateTime($item->start), true, true);
+        }
+        foreach ($modified as $item) {
+            // exclude original, include modified
+            $exDates[] = new DateExclusion(new \DateTime($item->originalStart), true, true);
+            $rDates[] = new DateInclusion(new \DateTime($item->start), true, true);
+        }
+        if (!empty($exDates)) {
+            $rule->setExDates($exDates);
+        }
+        if (!empty($rDates)) {
+            $rule->setRDates($rDates);
         }
 
         return $rule;

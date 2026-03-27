@@ -6,7 +6,12 @@
 
 namespace yiiunit\extensions\ews;
 
+use Recurr\Exception\InvalidArgument;
+use Recurr\Exception\InvalidRRule;
+use simialbi\yii2\ews\models\DeletedOccurrence;
+use simialbi\yii2\ews\models\ModifiedOccurrence;
 use simialbi\yii2\ews\recurrence\transformers\ExchangeTransformer;
+use yii\base\InvalidConfigException;
 
 class EwsToRuleTest extends TestCase
 {
@@ -205,6 +210,53 @@ class EwsToRuleTest extends TestCase
         $this->assertEquals(
             'FREQ=YEARLY;UNTIL=20321130T235959;INTERVAL=1;BYDAY=3MO;BYMONTH=11',
             $this->getRule($data)->getString()
+        );
+    }
+
+    /**
+     * @throws InvalidRRule
+     * @throws InvalidConfigException
+     * @throws InvalidArgument
+     */
+    public function testDeletedModified()
+    {
+        $data = [
+            'AbsoluteMonthlyRecurrence' => null,
+            'AbsoluteYearlyRecurrence' => null,
+            'DailyRecurrence' => null,
+            'EndDateRecurrence' => [
+                'StartDate' => '2025-11-17+01:00',
+                'EndDate' => '2032-11-30+01:00'
+            ],
+            'NoEndRecurrence' => null,
+            'NumberedRecurrence' => null,
+            'RelativeMonthlyRecurrence' => null,
+            'RelativeYearlyRecurrence' => [
+                'DayOfWeekIndex' => 'Third',
+                'DaysOfWeek' => 'Monday',
+                'Month' => 'November',
+            ],
+            'WeeklyRecurrence' => null,
+            'DailyRegeneration' => null,
+            'MonthlyRegeneration' => null,
+            'WeeklyRegeneration' => null,
+            'YearlyRegeneration' => null,
+        ];
+
+        $deleted = new DeletedOccurrence([
+            'start' => '2028-11-17+01:00',
+        ]);
+        $modified = new ModifiedOccurrence([
+            'originalStart' => '2029-11-17+01:00',
+            'start' => '2029-11-18+01:00',
+        ]);
+
+        $transformer = new ExchangeTransformer();
+        $ruleStr = $transformer->transformRecurrenceFromEws($data, [$modified], [$deleted])->getString();
+
+        $this->assertEquals(
+            'FREQ=YEARLY;UNTIL=20321130T235959;INTERVAL=1;BYDAY=3MO;BYMONTH=11;RDATE=20291118T000000Z;EXDATE=20281117T000000Z,20291117T000000Z',
+            $ruleStr
         );
     }
 
