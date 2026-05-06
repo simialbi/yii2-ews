@@ -210,7 +210,7 @@ class ActiveQuery extends Query implements ActiveQueryInterface
                                 }
                                 /** @var ActiveRecord $class */
                                 $class = Yii::createObject([
-                                    'class' => "simialbi\\yii2\\ews\models\\$modelClass"
+                                    'class' => "simialbi\\yii2\\ews\\models\\$modelClass"
                                 ]);
                                 $queryInstance = new self(get_class($class));
                                 $models = $queryInstance->populate($isArray ? $value : [$value]);

@@ -166,6 +166,18 @@ class CalendarEventTest extends TestCase
                 'dataType' => ['Attachment[]'],
                 'foreignModel' => '\jamesiarmes\PhpEws\ArrayType\ArrayOfAttachmentsType',
                 'foreignField' => 'Attachments.FileAttachment'
+            ],
+            'deletedOccurrences' => [
+                'readOnly' => false,
+                'dataType' => ['DeletedOccurrence[]'],
+                'foreignModel' => '\jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfDeletedOccurrencesType',
+                'foreignField' => 'DeletedOccurrences.DeletedOccurrence'
+            ],
+            'modifiedOccurrences' => [
+                'readOnly' => false,
+                'dataType' => ['ModifiedOccurrence[]'],
+                'foreignModel' => '\jamesiarmes\PhpEws\ArrayType\NonEmptyArrayOfOccurrenceInfoType',
+                'foreignField' => 'ModifiedOccurrences.Occurrence'
             ]
         ];
 

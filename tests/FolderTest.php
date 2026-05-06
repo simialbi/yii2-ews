@@ -3,6 +3,7 @@
 namespace yiiunit\extensions\ews;
 
 use simialbi\yii2\ews\models\Folder;
+use simialbi\yii2\ews\models\TasksFolder;
 
 class FolderTest extends TestCase
 {
@@ -12,18 +13,19 @@ class FolderTest extends TestCase
     public function testAttributeMapping()
     {
         $attributeMapping = Folder::attributeMapping();
+        $attributeMapping2 = TasksFolder::attributeMapping();
         $expectedSubset = [
             'id' => [
                 'readOnly' => false,
                 'dataType' => ['string'],
-                'foreignModel' => '\jamesiarmes\PhpEws\Type\ItemIdType',
-                'foreignField' => 'ItemId.Id'
+                'foreignModel' => '\jamesiarmes\PhpEws\Type\FolderIdType',
+                'foreignField' => 'FolderId.Id'
             ],
             'changeKey' => [
                 'readOnly' => false,
                 'dataType' => ['string'],
-                'foreignModel' => '\jamesiarmes\PhpEws\Type\ItemIdType',
-                'foreignField' => 'ItemId.ChangeKey'
+                'foreignModel' => '\jamesiarmes\PhpEws\Type\FolderIdType',
+                'foreignField' => 'FolderId.ChangeKey'
             ],
             'parentFolderId' => [
                 'readOnly' => false,
@@ -70,6 +72,15 @@ class FolderTest extends TestCase
         foreach ($expectedSubset as $key => $value) {
             $this->assertArrayHasKey($key, $attributeMapping);
             $this->assertSame($value, $attributeMapping[$key]);
+        }
+
+        foreach ($attributeMapping2 as $key => $value) {
+            $this->assertArrayHasKey($key, $expectedSubset);
+        }
+
+        foreach ($expectedSubset as $key => $value) {
+            $this->assertArrayHasKey($key, $attributeMapping2);
+            $this->assertSame($value, $attributeMapping2[$key]);
         }
     }
 
