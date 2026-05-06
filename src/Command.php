@@ -370,6 +370,10 @@ class Command extends Component
         if ($result instanceof \jamesiarmes\PhpEws\ArrayType\ArrayOfRealItemsType) {
             $result = [];
         }
+        // No Folders returned
+        if ($result instanceof \jamesiarmes\PhpEws\ArrayType\ArrayOfFoldersType) {
+            $result = [];
+        }
 
         return $result;
     }

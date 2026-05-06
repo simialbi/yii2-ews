@@ -56,6 +56,7 @@ use simialbi\yii2\ews\models\Contact;
 use simialbi\yii2\ews\models\Folder;
 use simialbi\yii2\ews\models\Message;
 use simialbi\yii2\ews\models\Task;
+use simialbi\yii2\ews\models\TasksFolder;
 use simialbi\yii2\ews\recurrence\transformers\ExchangeTransformer;
 use Yii;
 use yii\base\InvalidConfigException;
@@ -150,6 +151,10 @@ class QueryBuilder extends \yii\db\QueryBuilder
                     switch ($this->_modelClass) {
                         case Folder::class:
                             $this->_config['class'] = FindFolderType::class;
+                            break;
+                        case TasksFolder::class:
+                            $this->_config['class'] = FindFolderType::class;
+                            $params['folderId'] = DistinguishedFolderIdNameType::TASKS;
                             break;
                         case CalendarEvent::class:
                             $params['folderId'] = DistinguishedFolderIdNameType::CALENDAR;

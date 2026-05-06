@@ -6,8 +6,7 @@
 
 namespace simialbi\yii2\ews\models;
 
-use jamesiarmes\PhpEws\Type\FolderType;
-use simialbi\yii2\ews\ActiveRecord;
+use jamesiarmes\PhpEws\Type\TasksFolderType;
 
 /**
  * Class Folder
@@ -22,24 +21,13 @@ use simialbi\yii2\ews\ActiveRecord;
  * @property integer $totalCount => TotalCount
  * @property integer $childrenCount => ChildFolderCount
  */
-class Folder extends ActiveRecord
+class TasksFolder extends Folder
 {
     /**
      * {@inheritDoc}
      */
     public static function modelName(): string
     {
-        return FolderType::class;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function rules(): array
-    {
-        return [
-            [['id', 'changeKey', 'name'], 'string'],
-            [['unreadCount', 'totalCount', 'childrenCount'], 'integer']
-        ];
+        return TasksFolderType::class;
     }
 }
