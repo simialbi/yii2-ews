@@ -14,7 +14,7 @@ use simialbi\yii2\ews\ActiveRecord;
  * @package simialbi\yii2\ews\models
  *
  * @property string $id => \jamesiarmes\PhpEws\Type\FolderIdType:FolderId.Id
- * @property string $changeKey => \jamesiarmes\PhpEws\Type\FolderIdType:FolderId.Id
+ * @property string $changeKey => \jamesiarmes\PhpEws\Type\FolderIdType:FolderId.ChangeKey
  * @property string $parentFolderId => \jamesiarmes\PhpEws\Type\FolderIdType:ParentFolderId.Id
  * @property string $parentFolderChangeKey => \jamesiarmes\PhpEws\Type\FolderIdType:ParentFolderId.ChangeKey
  * @property string $name => DisplayName
