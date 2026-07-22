@@ -27,11 +27,17 @@ class Client extends \jamesiarmes\PhpEws\Client
     {
         parent::__construct($server, $username, $password, $version);
 
+        /*
         if (null === $timezone) {
             $this->autoSetTimezone(); // TODO: Can cause problems, maybe remove
         } else {
             $this->setTimezone($timezone);
         }
+        /*/
+        if ($timezone) {
+            $this->setTimezone($timezone);
+        }
+        //*/
     }
 
     /**
